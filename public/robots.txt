@@ -1,0 +1,7 @@
+# robots.txt for psychodelfina.ru
+# Default policy: allow crawling
+User-agent: *
+Allow: /
+
+# Sitemap (generated during build by @astrojs/sitemap)
+Sitemap: https://psychodelfina.ru/sitemap-index.xml

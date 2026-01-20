@@ -1,11 +1,45 @@
 ---
-import Welcome from '../components/Welcome.astro';
 import Layout from '../layouts/Layout.astro';
+import { siteConfig } from '../config/site.config';
 
-// Welcome to Astro! Wondering what to do next? Check out the Astro documentation at https://docs.astro.build
-// Don't want to use any of this? Delete everything in this file, the `assets`, `components`, and `layouts` directories, and start fresh.
+// Preact components
+import ParallaxBackground from '../components/ParallaxBackground';
+import Navbar from '../components/Navbar';
+import Hero from '../components/Hero';
+import Portfolio from '../components/Portfolio';
+import Certificates from '../components/Certificates';
+import FAQ from '../components/FAQ';
+import Contacts from '../components/Contacts';
+import Footer from '../components/Footer';
+import Lightbox from '../components/Lightbox';
+import PixelBunny from '../components/PixelBunny';
 ---
 
-<Layout>
-	<Welcome />
+<Layout title={siteConfig.seo.title} description={siteConfig.seo.description}>
+	<PixelBunny client:load />
+	<ParallaxBackground client:load />
+	<Navbar config={siteConfig} client:load />
+	<Hero config={siteConfig} />
+	<Portfolio images={siteConfig.portfolio} />
+	<Certificates images={siteConfig.certificates} telegramUrl={siteConfig.contacts.telegram} />
+	<FAQ items={siteConfig.faq} />
+	<Contacts config={siteConfig} />
+	<Footer config={siteConfig} />
+	<Lightbox client:load />
 </Layout>
+
+<script>
+	// Smooth scroll for nav links
+	document.addEventListener('DOMContentLoaded', () => {
+		document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
+			anchor.addEventListener('click', function (e) {
+				e.preventDefault();
+				const href = (this as HTMLAnchorElement).getAttribute('href');
+				if (href) {
+					const target = document.querySelector(href);
+					target?.scrollIntoView({ behavior: 'smooth' });
+				}
+			});
+		});
+	});
+</script>

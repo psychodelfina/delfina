@@ -1,22 +1,147 @@
+---
+import { Seo } from 'astro-seo-meta';
+import { Schema } from 'astro-seo-schema';
+import { siteConfig, generateStructuredData } from '../config/site.config';
+
+interface Props {
+  title?: string;
+  description?: string;
+  ogImage?: string;
+  canonicalUrl?: string;
+}
+
+const { seo } = siteConfig;
+
+const { 
+  title = seo.title, 
+  description = seo.description,
+  ogImage = seo.ogImage,
+  canonicalUrl = seo.siteUrl,
+} = Astro.props;
+
+// Generate full URLs
+const fullOgImage = ogImage.startsWith('http') ? ogImage : `${seo.siteUrl}${ogImage}`;
+const fullCanonicalUrl = canonicalUrl.startsWith('http') ? canonicalUrl : `${seo.siteUrl}${canonicalUrl}`;
+
+// Generate structured data using existing function
+const structuredData = generateStructuredData(siteConfig);
+---
+
 <!doctype html>
-<html lang="en">
+<html lang="ru" class="scroll-smooth">
 	<head>
+		<!-- Primary Meta Tags (via astro-seo-meta) -->
 		<meta charset="UTF-8" />
-		<meta name="viewport" content="width=device-width" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		
+		<!-- SEO Component - generates title, description, OG, Twitter tags -->
+		<Seo
+			title={title}
+			description={description}
+			keywords={seo.keywords}
+			author={seo.author}
+			canonical={fullCanonicalUrl}
+			openGraph={{
+				type: seo.ogType,
+				url: fullCanonicalUrl,
+				title: title,
+				description: description,
+				image: fullOgImage,
+				site_name: seo.siteName,
+				locale: seo.locale,
+			}}
+			twitter={{
+				card: seo.twitterCard,
+				site: seo.twitterSite,
+				creator: seo.twitterCreator,
+				title: title,
+				description: description,
+				image: fullOgImage,
+				imageAlt: seo.ogImageAlt,
+			}}
+		/>
+		
+		<!-- Additional meta from config -->
 		<meta name="generator" content={Astro.generator} />
-		<title>Astro Basics</title>
+		<meta name="robots" content={`${seo.robots.index ? 'index' : 'noindex'}, ${seo.robots.follow ? 'follow' : 'nofollow'}`} />
+		{seo.robots.googleBot && <meta name="googlebot" content={seo.robots.googleBot} />}
+		
+		<!-- Open Graph additional tags -->
+		<meta property="og:image:alt" content={seo.ogImageAlt} />
+		<meta property="og:image:width" content={String(seo.ogImageWidth)} />
+		<meta property="og:image:height" content={String(seo.ogImageHeight)} />
+		
+		<!-- Favicon -->
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="apple-touch-icon" sizes="180x180" href="/favicon.svg" />
+		
+		<!-- Theme Color -->
+		<meta name="theme-color" content={seo.themeColor} />
+		<meta name="msapplication-TileColor" content={seo.themeColor} />
+		
+		<!-- Additional Mobile meta -->
+		<meta name="format-detection" content="telephone=no" />
+		<meta name="mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+		<meta name="apple-mobile-web-app-title" content={seo.siteName} />
+		
+		<!-- Geo Tags -->
+		<meta name="geo.region" content="RU-SPE" />
+		<meta name="geo.placename" content="Санкт-Петербург" />
+		{seo.structuredData.geo && (
+			<meta name="geo.position" content={`${seo.structuredData.geo.latitude};${seo.structuredData.geo.longitude}`} />
+		)}
+		<meta name="ICBM" content={seo.structuredData.geo ? `${seo.structuredData.geo.latitude}, ${seo.structuredData.geo.longitude}` : ''} />
+		
+		<!-- Language -->
+		<link rel="alternate" hreflang="ru" href={seo.siteUrl} />
+		<link rel="alternate" hreflang="x-default" href={seo.siteUrl} />
+		
+		<!-- Sitemap -->
+		<link rel="sitemap" type="application/xml" href="/sitemap.xml" />
+		
+		<!-- Structured Data / JSON-LD (via astro-seo-schema) -->
+		<Schema item={structuredData} />
+		
+		<!-- Preconnect for Performance -->
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+		<link rel="dns-prefetch" href="https://fonts.gstatic.com" />
+		
+		<!-- Fonts -->
+		<link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;500;600;700&family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 	</head>
-	<body>
+	<body class="font-body bg-bg-dark text-white leading-relaxed overflow-x-hidden">
 		<slot />
 	</body>
 </html>
 
-<style>
-	html,
-	body {
-		margin: 0;
-		width: 100%;
-		height: 100%;
+<style is:global>
+	/* Custom scrollbar */
+	::-webkit-scrollbar {
+		width: 8px;
+	}
+
+	::-webkit-scrollbar-track {
+		background: #0a0612;
+	}
+
+	::-webkit-scrollbar-thumb {
+		background: linear-gradient(135deg, #ff2d95 0%, #e930ff 50%, #9945ff 100%);
+		border-radius: 4px;
+	}
+
+	/* Selection */
+	::selection {
+		background: #ff2d95;
+		color: white;
+	}
+
+	/* Smooth anchor scrolling */
+	html {
+		scroll-behavior: smooth;
 	}
 </style>

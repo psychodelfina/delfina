@@ -1,0 +1,73 @@
+interface CertificateImage {
+  src: string;
+  alt: string;
+}
+
+interface Props {
+  images: CertificateImage[];
+  telegramUrl: string;
+}
+
+export default function Certificates({ images, telegramUrl }: Props) {
+  return (
+    <section 
+      class="py-2 relative z-[1]" 
+      id="certificates"
+      style={{ background: 'linear-gradient(180deg, transparent 0%, rgba(255, 45, 149, 0.05) 50%, transparent 100%)' }}
+    >
+      <div class="max-w-[1200px] mx-auto px-6">
+        <h2 class="font-heading text-3xl md:text-4xl text-center mb-4 flex items-center justify-center gap-4">
+          <span class="text-3xl">🎁</span>
+          Подарочные сертификаты
+        </h2>
+        <p class="text-center text-text-muted text-lg mb-16">Идеальный подарок для тех, кто мечтает о тату</p>
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {images.map((image, index) => (
+            <div 
+              key={index}
+              class="certificate-item cursor-pointer rounded-2xl overflow-hidden opacity-0 animate-fade-in-up hover:-translate-y-2 hover:shadow-[0_20px_40px_rgba(255,45,149,0.2)] transition-all duration-300"
+              style={{ animationDelay: `${index * 0.1}s` }}
+            >
+              <img 
+                src={image.src}
+                alt={image.alt}
+                loading="lazy"
+                class="w-full h-full object-cover"
+              />
+            </div>
+          ))}
+        </div>
+        
+        <div class="text-center mt-16 p-10 bg-bg-card rounded-3xl border border-neon-pink/20">
+          <p class="text-xl text-text-muted mb-6">Хотите подарить тату? Напишите мне для оформления сертификата!</p>
+          <a 
+            href={telegramUrl}
+            class="inline-flex items-center justify-center gap-3 px-8 py-4 bg-gradient-neon rounded-full text-base font-semibold hover:-translate-y-1 hover:shadow-glow-pink transition-all duration-300"
+            target="_blank" 
+            rel="noopener"
+          >
+            Заказать сертификат
+          </a>
+        </div>
+      </div>
+      
+      <style>{`
+        .animate-fade-in-up {
+          animation: fadeInUp 0.6s ease forwards;
+        }
+        
+        @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(30px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+      `}</style>
+    </section>
+  );
+}
