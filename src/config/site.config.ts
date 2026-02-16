@@ -182,7 +182,7 @@ export const siteConfig: SiteConfig = {
     telegram: 'https://t.me/psychodelfina',
     instagram: 'https://instagram.com/psychodelfina',
     vk: 'https://vk.com/psychodelfina',
-    tiktok: 'https://tiktok.com/psychodelfina',
+    tiktok: 'https://tiktok.com/@psychodelfina',
   },
 
   portfolio: [
