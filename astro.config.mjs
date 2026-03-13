@@ -1,5 +1,5 @@
 // @ts-check
-import { defineConfig } from 'astro/config';
+import { defineConfig, fontProviders } from 'astro/config';
 import tailwind from '@astrojs/tailwind';
 import preact from '@astrojs/preact';
 import sitemap from '@astrojs/sitemap';
@@ -8,12 +8,48 @@ import compress from 'astro-compress';
 // https://astro.build/config
 export default defineConfig({
   site: 'https://psychodelfina.ru',
+  fonts: [
+    {
+      provider: fontProviders.local(),
+      name: 'Comfortaa',
+      cssVariable: '--font-heading',
+      options: {
+        variants: [
+          {
+            weight: '300 700',
+            style: 'normal',
+            src: ['./src/assets/fonts/comfortaa/Comfortaa-VariableFont_wght.ttf'],
+          },
+        ],
+      },
+    },
+    {
+      provider: fontProviders.local(),
+      name: 'Nunito',
+      cssVariable: '--font-body',
+      options: {
+        variants: [
+          {
+            weight: '200 1000',
+            style: 'normal',
+            src: ['./src/assets/fonts/nutino/Nunito-VariableFont_wght.ttf'],
+          },
+          {
+            weight: '200 1000',
+            style: 'italic',
+            src: ['./src/assets/fonts/nutino/Nunito-Italic-VariableFont_wght.ttf'],
+          },
+        ],
+      },
+    },
+  ],
+  experimental: {
+    svgo: true,
+  },
   integrations: [
     tailwind(),
     preact(),
     sitemap(),
-    // Compress - сжатие CSS, HTML, JS, SVG (должен быть последним)
-    // PurgeCSS отключён, т.к. Tailwind v3+ уже включает JIT с автоматической очисткой CSS
     compress({
       CSS: true,
       HTML: {
@@ -28,10 +64,10 @@ export default defineConfig({
           minifyJS: true,
         },
       },
-      Image: false, // Отключено, т.к. изображения уже оптимизированы
+      Image: false,
       JavaScript: true,
       SVG: true,
-      Logger: 1, // 0 = тихо, 1 = минимально, 2 = подробно
+      Logger: 1,
     }),
   ],
 });

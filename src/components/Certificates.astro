@@ -1,10 +1,20 @@
 ---
+import { Image } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+
 interface Props {
   images: { src: string; alt: string }[];
   telegramUrl: string;
 }
 
 const { images, telegramUrl } = Astro.props;
+
+const allImages = import.meta.glob<{ default: ImageMetadata }>('../assets/content/certificates/*.jpg', { eager: true });
+
+function getImage(filename: string): ImageMetadata | undefined {
+  const key = Object.keys(allImages).find(k => k.endsWith(`/${filename}`));
+  return key ? allImages[key].default : undefined;
+}
 ---
 
 <section
@@ -20,21 +30,27 @@ const { images, telegramUrl } = Astro.props;
     <p class="text-center text-text-muted text-lg mb-16" data-scroll-subtitle>Идеальный подарок для тех, кто мечтает о тату</p>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-      {images.map((image, index) => (
-        <div
-          class="certificate-item cursor-pointer rounded-2xl overflow-hidden hover:-translate-y-2 hover:shadow-[0_20px_40px_rgba(255,45,149,0.2)] transition-all duration-300"
-          style="will-change: transform, opacity; contain: layout style paint"
-          data-scroll-cert
-        >
-          <img
-            src={image.src}
-            alt={image.alt}
-            loading="lazy"
-            decoding="async"
-            class="w-full h-full object-cover"
-          />
-        </div>
-      ))}
+      {images.map((image) => {
+        const filename = image.src.split('/').pop()!;
+        const imgData = getImage(filename);
+        return imgData && (
+          <div
+            class="certificate-item cursor-pointer rounded-2xl overflow-hidden hover:-translate-y-2 hover:shadow-[0_20px_40px_rgba(255,45,149,0.2)] transition-all duration-300"
+            style="contain: layout style paint"
+            data-scroll-cert
+          >
+            <Image
+              src={imgData}
+              alt={image.alt}
+              loading="lazy"
+              decoding="async"
+              class="w-full h-full object-cover"
+              width={400}
+              height={400}
+            />
+          </div>
+        );
+      })}
     </div>
 
     <div class="text-center mt-16 p-10 bg-bg-card rounded-3xl border border-neon-pink/20" data-scroll-cert-cta>

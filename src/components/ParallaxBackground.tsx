@@ -117,10 +117,10 @@ export default function ParallaxBackground() {
     typeof window !== 'undefined' && window.innerWidth < 768
   );
 
-  const [starsFar] = useState<Star[]>(() => generateStars(isMobile ? 15 : 30, 1, 0.3));
-  const [starsMedium] = useState<Star[]>(() => generateStars(isMobile ? 12 : 25, 5, 0.5));
-  const [starsClose] = useState<Star[]>(() => generateStars(isMobile ? 8 : 15, 7, 0.7));
-  const [particles] = useState<Particle[]>(() => generateParticles(isMobile ? 4 : 10));
+  const [starsFar] = useState<Star[]>(() => generateStars(isMobile ? 10 : 30, 1, 0.3));
+  const [starsMedium] = useState<Star[]>(() => generateStars(isMobile ? 8 : 25, 5, 0.5));
+  const [starsClose] = useState<Star[]>(() => generateStars(isMobile ? 5 : 15, 7, 0.7));
+  const [particles] = useState<Particle[]>(() => generateParticles(isMobile ? 2 : 10));
 
   useEffect(() => {
     if (isMobile) return;
@@ -174,9 +174,18 @@ export default function ParallaxBackground() {
         {/* Layer 2: Nebula effect */}
         <div data-depth="0.2" class="absolute inset-0">
           <div style={fieldStyle}>
-            <div class="absolute top-1/4 left-1/4 w-[600px] h-[600px] bg-neon-pink/10 rounded-full blur-[150px]" />
-            <div class="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-neon-purple/10 rounded-full blur-[150px]" />
-            <div class="absolute top-1/2 left-1/2 w-[400px] h-[400px] bg-neon-cyan/5 rounded-full blur-[120px]" />
+            <div
+              class="absolute top-1/4 left-1/4 rounded-full bg-neon-pink/10"
+              style={{ width: isMobile ? '300px' : '600px', height: isMobile ? '300px' : '600px', filter: `blur(${isMobile ? 40 : 150}px)` }}
+            />
+            <div
+              class="absolute bottom-1/4 right-1/4 rounded-full bg-neon-purple/10"
+              style={{ width: isMobile ? '250px' : '500px', height: isMobile ? '250px' : '500px', filter: `blur(${isMobile ? 40 : 150}px)` }}
+            />
+            <div
+              class="absolute top-1/2 left-1/2 rounded-full bg-neon-cyan/5"
+              style={{ width: isMobile ? '200px' : '400px', height: isMobile ? '200px' : '400px', filter: `blur(${isMobile ? 30 : 120}px)` }}
+            />
           </div>
         </div>
         

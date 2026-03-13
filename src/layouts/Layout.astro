@@ -55,11 +55,7 @@ const structuredData = generateStructuredData(siteConfig);
 			twitter={{
 				card: seo.twitterCard,
 				site: seo.twitterSite,
-				creator: seo.twitterCreator,
-				title: title,
-				description: description,
 				image: fullOgImage,
-				imageAlt: seo.ogImageAlt,
 			}}
 		/>
 		
@@ -106,16 +102,9 @@ const structuredData = generateStructuredData(siteConfig);
 		<!-- Structured Data / JSON-LD (via astro-seo-schema) -->
 		<Schema item={structuredData} />
 		
-		<!-- Preconnect for Performance -->
-		<link rel="preconnect" href="https://fonts.googleapis.com" />
-		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-		<link rel="dns-prefetch" href="https://fonts.googleapis.com" />
-		<link rel="dns-prefetch" href="https://fonts.gstatic.com" />
+		<!-- DNS Prefetch for external resources -->
 		<link rel="dns-prefetch" href="https://vk.com" />
 		<link rel="dns-prefetch" href="https://www.tiktok.com" />
-		
-		<!-- Fonts -->
-		<link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;500;600;700&family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 	</head>
 	<body class="font-body bg-bg-dark text-white leading-relaxed">
 		<div

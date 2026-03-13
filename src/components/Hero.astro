@@ -1,6 +1,8 @@
 ---
+import { Image } from 'astro:assets';
 import type { SiteConfig } from '../config/site.config';
 import TelegramIcon from './icons/TelegramIcon.astro';
+import heroImage from '../assets/content/my-selfie.jpg';
 
 interface Props {
   config: SiteConfig;
@@ -12,22 +14,23 @@ const { hero } = config;
 
 <header class="min-h-screen flex items-center pt-[120px] pb-20 px-6 relative z-[1] overflow-hidden" id="hero" role="banner" itemscope itemtype="https://schema.org/Person">
   <div
-    class="absolute -top-1/2 -left-1/2 w-[200%] h-[200%] animate-hero-glow -z-[1]"
+    class="absolute inset-0 w-full h-full md:-top-1/2 md:-left-1/2 md:w-[200%] md:h-[200%] animate-hero-glow -z-[1]"
     style="background: radial-gradient(circle at 20% 50%, rgba(255, 45, 149, 0.15) 0%, transparent 50%), radial-gradient(circle at 80% 50%, rgba(153, 69, 255, 0.15) 0%, transparent 50%), radial-gradient(circle at 50% 80%, rgba(0, 217, 255, 0.1) 0%, transparent 50%)"
   />
 
   <div class="max-w-[1200px] mx-auto grid grid-cols-1 lg:grid-cols-[1fr_1.2fr] gap-12 lg:gap-20 items-center">
     <div class="relative flex justify-center lg:order-none order-first">
-      <div class="absolute -inset-5 bg-gradient-neon blur-[60px] opacity-50 rounded-full animate-pulse-glow" />
-      <img
-        src={hero.image}
+      <div class="absolute -inset-5 bg-gradient-neon blur-[20px] md:blur-[60px] opacity-50 rounded-full animate-pulse-glow" />
+      <Image
+        src={heroImage}
         alt={`${hero.name} - ${hero.tagline} - тату мастер в ${hero.location}`}
         class="parallax-image w-full max-w-[400px] aspect-[3/4] object-cover rounded-3xl border-[3px] border-transparent relative z-[1]"
         style="background: linear-gradient(#0a0612, #0a0612) padding-box, linear-gradient(135deg, #ff2d95 0%, #e930ff 50%, #9945ff 100%) border-box"
         data-parallax-speed="0.1"
         itemprop="image"
-        width="400"
-        height="533"
+        width={400}
+        height={533}
+        loading="eager"
       />
       {hero.bookingOpen && (
         <a

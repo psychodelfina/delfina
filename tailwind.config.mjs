@@ -17,8 +17,8 @@ export default {
         'text-muted': '#b8b8d0',
       },
       fontFamily: {
-        'heading': ['Comfortaa', 'cursive'],
-        'body': ['Nunito', 'sans-serif'],
+        'heading': ['var(--font-heading)', 'cursive'],
+        'body': ['var(--font-body)', 'sans-serif'],
       },
       animation: {
         'twinkle': 'twinkle 3s ease-in-out infinite',

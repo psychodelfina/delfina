@@ -122,7 +122,7 @@ export const siteConfig: SiteConfig = {
     
     // Open Graph
     ogType: 'website',
-    ogImage: '/content/my-selfie.jpg',
+    ogImage: '/og-image.jpg',
     ogImageAlt: 'Psychodelfina — тату мастер в Санкт-Петербурге',
     ogImageWidth: 1200,
     ogImageHeight: 630,

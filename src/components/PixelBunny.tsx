@@ -695,8 +695,13 @@ export default function PixelBunny() {
     bunnyRef.current.x = Math.random() * (window.innerWidth - BUNNY_SIZE - 100) + 50;
     bunnyRef.current.y = Math.random() * (window.innerHeight - BUNNY_SIZE - 100) + 50;
     
-    // Запуск игрового цикла
-    gameLoop();
+    const startLoop = () => gameLoop();
+    const idle = (window as any).requestIdleCallback;
+    if (idle) {
+      idle(startLoop);
+    } else {
+      setTimeout(startLoop, 200);
+    }
 
     // Очистка при размонтировании компонента
     return () => {

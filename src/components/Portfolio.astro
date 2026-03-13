@@ -1,9 +1,19 @@
 ---
+import { Image } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+
 interface Props {
   images: { src: string; alt: string }[];
 }
 
 const { images } = Astro.props;
+
+const allImages = import.meta.glob<{ default: ImageMetadata }>('../assets/content/portfolio/*.jpg', { eager: true });
+
+function getImage(filename: string): ImageMetadata | undefined {
+  const key = Object.keys(allImages).find(k => k.endsWith(`/${filename}`));
+  return key ? allImages[key].default : undefined;
+}
 ---
 
 <section class="py-24 relative z-[1]" id="portfolio" aria-labelledby="portfolio-heading">
@@ -15,28 +25,32 @@ const { images } = Astro.props;
     <p class="text-center text-text-muted text-lg mb-16" data-scroll-subtitle>Яркие татуировки, которые расскажут вашу историю</p>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" role="list" aria-label="Галерея работ">
-      {images.map((image, index) => (
-        <figure
-          class="portfolio-item relative rounded-2xl overflow-hidden aspect-square cursor-pointer group m-0"
-          data-scroll-portfolio
-          role="listitem"
-          itemscope
-          itemtype="https://schema.org/ImageObject"
-        >
-          <img
-            src={image.src}
-            alt={image.alt}
-            loading="lazy"
-            decoding="async"
-            class="parallax-gallery w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-            data-parallax-speed="0.05"
-            itemprop="contentUrl"
-            width="400"
-            height="400"
-          />
-          <meta itemprop="name" content={image.alt} />
-        </figure>
-      ))}
+      {images.map((image) => {
+        const filename = image.src.split('/').pop()!;
+        const imgData = getImage(filename);
+        return imgData && (
+          <figure
+            class="portfolio-item relative rounded-2xl overflow-hidden aspect-square cursor-pointer group m-0"
+            data-scroll-portfolio
+            role="listitem"
+            itemscope
+            itemtype="https://schema.org/ImageObject"
+          >
+            <Image
+              src={imgData}
+              alt={image.alt}
+              loading="lazy"
+              decoding="async"
+              class="parallax-gallery w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+              data-parallax-speed="0.05"
+              itemprop="contentUrl"
+              width={400}
+              height={400}
+            />
+            <meta itemprop="name" content={image.alt} />
+          </figure>
+        );
+      })}
     </div>
   </div>
 </section>
