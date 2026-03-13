@@ -244,6 +244,9 @@ const colors: Record<number, string> = {
 // ТИПЫ
 // =============================================================================
 
+/** Целевая частота кадров для нормализации delta-time (60 FPS) */
+const TARGET_FRAME_MS = 1000 / 60;
+
 /** Возможные состояния зайца */
 type BunnyState = 'idle' | 'running' | 'eating' | 'caught';
 
@@ -260,6 +263,8 @@ interface BunnyPosition {
   eatingTimer: number;    // Таймер поедания морковки
   isBrave: boolean;       // Флаг смелости (не убегает)
   braveryCheckDone: boolean; // Флаг, что проверка смелости уже сделана
+  nextRunThreshold: number;   // Предвычисленный порог для остановки бега
+  nextIdleThreshold: number;  // Предвычисленный порог для начала бега из idle
 }
 
 // =============================================================================
@@ -316,11 +321,20 @@ export default function PixelBunny() {
     eatingTimer: 0,
     isBrave: false,
     braveryCheckDone: false,
+    nextRunThreshold: MIN_RUN_TIME + Math.random() * MAX_RUN_TIME_BONUS,
+    nextIdleThreshold: MIN_IDLE_TIME + Math.random() * MAX_IDLE_TIME_BONUS,
   });
   
   const pointerRef = useRef({ x: -1000, y: -1000 });
   const animationRef = useRef<number>(0);
   const isDraggingRef = useRef(false);
+  const lastTimeRef = useRef<number>(0);
+
+  /** Кешированная позиция прокрутки (обновляется через passive listener) */
+  const scrollRef = useRef({ x: 0, y: 0 });
+
+  /** Кешированные размеры документа (обновляются при resize) */
+  const docSizeRef = useRef({ w: 0, h: 0 });
 
   /** Предыдущая область отрисовки для dirty rect clearing */
   const prevDrawRect = useRef({ x: 0, y: 0, w: 0, h: 0 });
@@ -428,16 +442,28 @@ export default function PixelBunny() {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    /**
-     * Установка размера canvas на весь документ.
-     * Canvas должен покрывать всю прокручиваемую область.
-     */
+    const updateDocSize = () => {
+      docSizeRef.current.w = Math.max(document.documentElement.scrollWidth, window.innerWidth);
+      docSizeRef.current.h = Math.max(document.documentElement.scrollHeight, window.innerHeight);
+    };
+
     const resizeCanvas = () => {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
+      updateDocSize();
     };
     resizeCanvas();
+
+    scrollRef.current.x = window.scrollX || 0;
+    scrollRef.current.y = window.scrollY || 0;
+
+    const handleScroll = () => {
+      scrollRef.current.x = window.scrollX || 0;
+      scrollRef.current.y = window.scrollY || 0;
+    };
+
     window.addEventListener('resize', resizeCanvas);
+    window.addEventListener('scroll', handleScroll, { passive: true });
 
     // =========================================================================
     // ВСПОМОГАТЕЛЬНАЯ ФУНКЦИЯ ДЛЯ ПОЛУЧЕНИЯ КООРДИНАТ
@@ -531,41 +557,43 @@ export default function PixelBunny() {
     // ГЛАВНЫЙ ИГРОВОЙ ЦИКЛ
     // =========================================================================
     
-    const gameLoop = () => {
+    const gameLoop = (timestamp: number) => {
+      if (!lastTimeRef.current) lastTimeRef.current = timestamp;
+      const rawDelta = timestamp - lastTimeRef.current;
+      lastTimeRef.current = timestamp;
+
+      const delta = Math.min(rawDelta, 100) / TARGET_FRAME_MS;
+
       const bunny = bunnyRef.current;
       const pointer = pointerRef.current;
       
-      // Расстояние до курсора/пальца
-      const dx = pointer.x - (bunny.x + BUNNY_SIZE / 2);
-      const dy = pointer.y - (bunny.y + BUNNY_SIZE / 2);
+      const bunnyCX = bunny.x + BUNNY_SIZE / 2;
+      const bunnyCY = bunny.y + BUNNY_SIZE / 2;
+      const dx = pointer.x - bunnyCX;
+      const dy = pointer.y - bunnyCY;
       const distToPointer = Math.sqrt(dx * dx + dy * dy);
       
-      // Обновление счётчиков
-      bunny.frame++;
-      bunny.stateTimer++;
+      bunny.frame += delta;
+      bunny.stateTimer += delta;
       
       // -----------------------------------------------------------------------
       // ЛОГИКА ПОВЕДЕНИЯ ЗАЙЦА
       // -----------------------------------------------------------------------
       
       if (bunny.state === 'caught') {
-        // Пойманный заяц следует за курсором/пальцем
         bunny.x = pointer.x - BUNNY_SIZE / 2;
         bunny.y = pointer.y - BUNNY_SIZE / 2;
       } else {
-        // Проверка на смелость при приближении курсора
         if (distToPointer < FLEE_DISTANCE) {
           if (!bunny.braveryCheckDone) {
             bunny.braveryCheckDone = true;
             bunny.isBrave = Math.random() < BRAVERY_CHANCE;
           }
         } else {
-          // Сброс состояния смелости, когда курсор далеко
           bunny.braveryCheckDone = false;
           bunny.isBrave = false;
         }
 
-        // Убегание от курсора (если не смелый и не ест)
         if (distToPointer < FLEE_DISTANCE && !bunny.isBrave && bunny.state !== 'eating') {
           bunny.state = 'running';
           const angle = Math.atan2(dy, dx);
@@ -573,21 +601,20 @@ export default function PixelBunny() {
           bunny.vy = -Math.sin(angle) * FLEE_SPEED;
           bunny.direction = bunny.vx > 0 ? 'right' : 'left';
           bunny.stateTimer = 0;
+          bunny.nextRunThreshold = MIN_RUN_TIME + Math.random() * MAX_RUN_TIME_BONUS;
         } else if (bunny.state === 'eating') {
-          // Жуём морковку
-          bunny.eatingTimer++;
+          bunny.eatingTimer += delta;
           if (bunny.eatingTimer > EATING_DURATION) {
-            // Закончили есть - начинаем бежать
             bunny.state = 'running';
             bunny.eatingTimer = 0;
             const angle = Math.random() * Math.PI * 2;
             bunny.vx = Math.cos(angle) * SPEED;
             bunny.vy = Math.sin(angle) * SPEED;
             bunny.direction = bunny.vx > 0 ? 'right' : 'left';
+            bunny.nextRunThreshold = MIN_RUN_TIME + Math.random() * MAX_RUN_TIME_BONUS;
           }
         } else if (bunny.state === 'running') {
-          // Периодически останавливаемся и едим
-          if (bunny.stateTimer > MIN_RUN_TIME + Math.random() * MAX_RUN_TIME_BONUS) {
+          if (bunny.stateTimer > bunny.nextRunThreshold) {
             if (Math.random() < EAT_CHANCE) {
               bunny.state = 'eating';
               bunny.vx = 0;
@@ -595,10 +622,10 @@ export default function PixelBunny() {
               bunny.eatingTimer = 0;
             }
             bunny.stateTimer = 0;
+            bunny.nextRunThreshold = MIN_RUN_TIME + Math.random() * MAX_RUN_TIME_BONUS;
           }
           
-          // Случайное изменение направления для более естественного движения
-          if (Math.random() < DIRECTION_CHANGE_CHANCE) {
+          if (Math.random() < DIRECTION_CHANGE_CHANCE * delta) {
             const angleChange = (Math.random() - 0.5) * Math.PI / 2;
             const currentAngle = Math.atan2(bunny.vy, bunny.vx);
             const newAngle = currentAngle + angleChange;
@@ -607,78 +634,78 @@ export default function PixelBunny() {
             bunny.direction = bunny.vx > 0 ? 'right' : 'left';
           }
         } else {
-          // Idle - иногда начинаем бежать
-          if (bunny.stateTimer > MIN_IDLE_TIME + Math.random() * MAX_IDLE_TIME_BONUS) {
+          if (bunny.stateTimer > bunny.nextIdleThreshold) {
             bunny.state = 'running';
             const angle = Math.random() * Math.PI * 2;
             bunny.vx = Math.cos(angle) * SPEED;
             bunny.vy = Math.sin(angle) * SPEED;
             bunny.direction = bunny.vx > 0 ? 'right' : 'left';
             bunny.stateTimer = 0;
+            bunny.nextRunThreshold = MIN_RUN_TIME + Math.random() * MAX_RUN_TIME_BONUS;
+            bunny.nextIdleThreshold = MIN_IDLE_TIME + Math.random() * MAX_IDLE_TIME_BONUS;
           }
         }
       }
 
-      // Обновление позиции
-      bunny.x += bunny.vx;
-      bunny.y += bunny.vy;
+      bunny.x += bunny.vx * delta;
+      bunny.y += bunny.vy * delta;
       
       // -----------------------------------------------------------------------
-      // ГРАНИЦЫ ДОКУМЕНТА С ОТСКОКОМ
+      // ГРАНИЦЫ ДОКУМЕНТА С ОТСКОКОМ (из кеша, без layout thrashing)
       // -----------------------------------------------------------------------
       
-      const docWidth = Math.max(document.documentElement.scrollWidth, window.innerWidth);
-      const docHeight = Math.max(document.documentElement.scrollHeight, window.innerHeight);
+      const { w: docWidth, h: docHeight } = docSizeRef.current;
       
-      // Левая граница
       if (bunny.x < -X_OUT_BOUNDS) {
         bunny.x = -X_OUT_BOUNDS;
         bunny.vx = Math.abs(bunny.vx);
         bunny.direction = 'right';
       }
-      // Правая граница
       if (bunny.x > docWidth - BUNNY_SIZE + X_OUT_BOUNDS) {
         bunny.x = docWidth - BUNNY_SIZE + X_OUT_BOUNDS;
         bunny.vx = -Math.abs(bunny.vx);
         bunny.direction = 'left';
       }
-      // Верхняя граница
       if (bunny.y < BOUNDARY_PADDING) {
         bunny.y = BOUNDARY_PADDING;
         bunny.vy = Math.abs(bunny.vy);
       }
-      // Нижняя граница
       if (bunny.y > docHeight - BUNNY_SIZE - BOUNDARY_PADDING) {
         bunny.y = docHeight - BUNNY_SIZE - BOUNDARY_PADDING;
         bunny.vy = -Math.abs(bunny.vy);
       }
       
       // -----------------------------------------------------------------------
-      // ОТРИСОВКА (dirty rect — очищаем только предыдущую область)
+      // ОТРИСОВКА (dirty rect + кешированный scroll)
       // -----------------------------------------------------------------------
       
       const prev = prevDrawRect.current;
       ctx.clearRect(prev.x, prev.y, prev.w, prev.h);
 
-      const scrollX = window.scrollX || 0;
-      const scrollY = window.scrollY || 0;
+      const { x: scrollX, y: scrollY } = scrollRef.current;
       const drawX = bunny.x - scrollX;
       const drawY = bunny.y - scrollY;
-      
-      const { sprite, flipX } = getCurrentSprite(bunny);
-      const cachedSprite = renderSpriteToCanvas(sprite, flipX);
-      ctx.drawImage(cachedSprite, drawX, drawY);
-      
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
-      ctx.beginPath();
-      ctx.ellipse(
-        drawX + BUNNY_SIZE / 2, 
-        drawY + BUNNY_SIZE - 2, 
-        BUNNY_SIZE / 3, 
-        4, 
-        0, 0, Math.PI * 2
-      );
-      ctx.fill();
+
+      const vw = canvas.width;
+      const vh = canvas.height;
+      const isVisible = drawX > -BUNNY_SIZE && drawX < vw && drawY > -BUNNY_SIZE && drawY < vh;
+
+      if (isVisible) {
+        const { sprite, flipX } = getCurrentSprite(bunny);
+        const cachedSprite = renderSpriteToCanvas(sprite, flipX);
+        ctx.drawImage(cachedSprite, drawX, drawY);
+        
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+        ctx.beginPath();
+        ctx.ellipse(
+          drawX + BUNNY_SIZE / 2, 
+          drawY + BUNNY_SIZE - 2, 
+          BUNNY_SIZE / 3, 
+          4, 
+          0, 0, Math.PI * 2
+        );
+        ctx.fill();
+      }
 
       const pad = 10;
       prevDrawRect.current = {
@@ -695,17 +722,18 @@ export default function PixelBunny() {
     bunnyRef.current.x = Math.random() * (window.innerWidth - BUNNY_SIZE - 100) + 50;
     bunnyRef.current.y = Math.random() * (window.innerHeight - BUNNY_SIZE - 100) + 50;
     
-    const startLoop = () => gameLoop();
+    const startLoop = (ts: number) => gameLoop(ts);
     const idle = (window as any).requestIdleCallback;
     if (idle) {
-      idle(startLoop);
+      idle(() => requestAnimationFrame(startLoop));
     } else {
-      setTimeout(startLoop, 200);
+      setTimeout(() => requestAnimationFrame(startLoop), 200);
     }
 
     // Очистка при размонтировании компонента
     return () => {
       window.removeEventListener('resize', resizeCanvas);
+      window.removeEventListener('scroll', handleScroll);
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mousedown', handleMouseDown);
       document.removeEventListener('mouseup', handleMouseUp);
@@ -715,7 +743,6 @@ export default function PixelBunny() {
       document.removeEventListener('touchcancel', handleTouchEnd);
       cancelAnimationFrame(animationRef.current);
       
-      // Восстанавливаем выделение текста на случай если было заблокировано
       document.body.style.userSelect = '';
       document.body.style.webkitUserSelect = '';
     };
@@ -727,8 +754,9 @@ export default function PixelBunny() {
       class="fixed top-0 left-0 pointer-events-none z-50"
       style={{ 
         imageRendering: 'pixelated',
-        // Отключаем touch-action чтобы браузер не обрабатывал касания
-        touchAction: 'none'
+        touchAction: 'none',
+        willChange: 'contents',
+        transform: 'translateZ(0)',
       }}
     />
   );
