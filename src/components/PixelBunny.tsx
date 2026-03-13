@@ -306,6 +306,9 @@ function renderSpriteToCanvas(sprite: number[][], flipX: boolean): HTMLCanvasEle
 // ОСНОВНОЙ КОМПОНЕНТ
 // =============================================================================
 
+/** Высота canvas с запасом под тень */
+const CANVAS_H = BUNNY_SIZE + 8;
+
 export default function PixelBunny() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   
@@ -336,8 +339,8 @@ export default function PixelBunny() {
   /** Кешированные размеры документа (обновляются при resize) */
   const docSizeRef = useRef({ w: 0, h: 0 });
 
-  /** Предыдущая область отрисовки для dirty rect clearing */
-  const prevDrawRect = useRef({ x: 0, y: 0, w: 0, h: 0 });
+  /** Предыдущий отрисованный спрайт для условной перерисовки */
+  const prevSpriteRef = useRef<HTMLCanvasElement | null>(null);
 
   const getCurrentSprite = (bunny: BunnyPosition): { sprite: number[][], flipX: boolean } => {
     if (bunny.state === 'caught') {
@@ -442,43 +445,31 @@ export default function PixelBunny() {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
+    canvas.width = BUNNY_SIZE;
+    canvas.height = CANVAS_H;
+
     const updateDocSize = () => {
       docSizeRef.current.w = Math.max(document.documentElement.scrollWidth, window.innerWidth);
       docSizeRef.current.h = Math.max(document.documentElement.scrollHeight, window.innerHeight);
     };
-
-    const resizeCanvas = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-      updateDocSize();
-    };
-    resizeCanvas();
+    updateDocSize();
 
     scrollRef.current.x = window.scrollX || 0;
     scrollRef.current.y = window.scrollY || 0;
 
+    const handleResize = () => updateDocSize();
     const handleScroll = () => {
       scrollRef.current.x = window.scrollX || 0;
       scrollRef.current.y = window.scrollY || 0;
     };
 
-    window.addEventListener('resize', resizeCanvas);
+    window.addEventListener('resize', handleResize);
     window.addEventListener('scroll', handleScroll, { passive: true });
 
-    // =========================================================================
-    // ВСПОМОГАТЕЛЬНАЯ ФУНКЦИЯ ДЛЯ ПОЛУЧЕНИЯ КООРДИНАТ
-    // =========================================================================
-    
-    /**
-     * Получение координат относительно документа (с учётом прокрутки).
-     * Использует clientX/clientY + scroll для надёжности в production.
-     */
-    const getPageCoords = (clientX: number, clientY: number) => {
-      return {
-        x: clientX + (window.scrollX || window.pageXOffset || document.documentElement.scrollLeft || 0),
-        y: clientY + (window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0)
-      };
-    };
+    const getPageCoords = (clientX: number, clientY: number) => ({
+      x: clientX + (window.scrollX || window.pageXOffset || document.documentElement.scrollLeft || 0),
+      y: clientY + (window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0)
+    });
 
     // =========================================================================
     // ОБРАБОТЧИКИ МЫШИ
@@ -491,32 +482,24 @@ export default function PixelBunny() {
 
     const handleMouseDown = (e: MouseEvent) => {
       const coords = getPageCoords(e.clientX, e.clientY);
-      
       if (isClickOnBunny(coords.x, coords.y)) {
-        // Предотвращаем стандартное поведение (выделение, drag)
         e.preventDefault();
         handlePointerDown(coords.x, coords.y);
       }
     };
 
-    const handleMouseUp = () => {
-      handlePointerUp();
-    };
+    const handleMouseUp = () => handlePointerUp();
 
     // =========================================================================
-    // ОБРАБОТЧИКИ КАСАНИЙ (TOUCH) ДЛЯ МОБИЛЬНЫХ УСТРОЙСТВ
+    // ОБРАБОТЧИКИ КАСАНИЙ (TOUCH)
     // =========================================================================
     
     const handleTouchStart = (e: TouchEvent) => {
       if (e.touches.length > 0) {
         const touch = e.touches[0];
         const coords = getPageCoords(touch.clientX, touch.clientY);
-        
-        // Обновляем позицию указателя
         handlePointerMove(coords.x, coords.y);
-        
         if (isClickOnBunny(coords.x, coords.y)) {
-          // Предотвращаем стандартное поведение (скролл, выделение, drag)
           e.preventDefault();
           handlePointerDown(coords.x, coords.y);
         }
@@ -528,26 +511,18 @@ export default function PixelBunny() {
         const touch = e.touches[0];
         const coords = getPageCoords(touch.clientX, touch.clientY);
         handlePointerMove(coords.x, coords.y);
-        
-        // Если заяц пойман - предотвращаем скролл страницы
-        if (isDraggingRef.current) {
-          e.preventDefault();
-        }
+        if (isDraggingRef.current) e.preventDefault();
       }
     };
 
     const handleTouchEnd = () => {
       handlePointerUp();
-      // Отодвигаем указатель далеко, чтобы заяц не убегал после отпускания
       pointerRef.current = { x: -1000, y: -1000 };
     };
 
-    // Регистрируем обработчики событий на document для лучшей совместимости
     document.addEventListener('mousemove', handleMouseMove, { passive: true });
     document.addEventListener('mousedown', handleMouseDown);
     document.addEventListener('mouseup', handleMouseUp);
-    
-    // Touch events с passive: false для возможности preventDefault
     document.addEventListener('touchstart', handleTouchStart, { passive: false });
     document.addEventListener('touchmove', handleTouchMove, { passive: false });
     document.addEventListener('touchend', handleTouchEnd);
@@ -556,6 +531,19 @@ export default function PixelBunny() {
     // =========================================================================
     // ГЛАВНЫЙ ИГРОВОЙ ЦИКЛ
     // =========================================================================
+
+    /**
+     * Перерисовка спрайта на маленьком canvas.
+     * Вызывается только при смене кадра анимации.
+     */
+    const redrawSprite = (cachedSprite: HTMLCanvasElement) => {
+      ctx.clearRect(0, 0, BUNNY_SIZE, CANVAS_H);
+      ctx.drawImage(cachedSprite, 0, 0);
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+      ctx.beginPath();
+      ctx.ellipse(BUNNY_SIZE / 2, BUNNY_SIZE - 2, BUNNY_SIZE / 3, 4, 0, 0, Math.PI * 2);
+      ctx.fill();
+    };
     
     const gameLoop = (timestamp: number) => {
       if (!lastTimeRef.current) lastTimeRef.current = timestamp;
@@ -575,10 +563,6 @@ export default function PixelBunny() {
       
       bunny.frame += delta;
       bunny.stateTimer += delta;
-      
-      // -----------------------------------------------------------------------
-      // ЛОГИКА ПОВЕДЕНИЯ ЗАЙЦА
-      // -----------------------------------------------------------------------
       
       if (bunny.state === 'caught') {
         bunny.x = pointer.x - BUNNY_SIZE / 2;
@@ -650,10 +634,6 @@ export default function PixelBunny() {
       bunny.x += bunny.vx * delta;
       bunny.y += bunny.vy * delta;
       
-      // -----------------------------------------------------------------------
-      // ГРАНИЦЫ ДОКУМЕНТА С ОТСКОКОМ (из кеша, без layout thrashing)
-      // -----------------------------------------------------------------------
-      
       const { w: docWidth, h: docHeight } = docSizeRef.current;
       
       if (bunny.x < -X_OUT_BOUNDS) {
@@ -676,51 +656,37 @@ export default function PixelBunny() {
       }
       
       // -----------------------------------------------------------------------
-      // ОТРИСОВКА (dirty rect + кешированный scroll)
+      // ПОЗИЦИОНИРОВАНИЕ ЧЕРЕЗ CSS TRANSFORM (GPU-компоситор)
       // -----------------------------------------------------------------------
-      
-      const prev = prevDrawRect.current;
-      ctx.clearRect(prev.x, prev.y, prev.w, prev.h);
 
       const { x: scrollX, y: scrollY } = scrollRef.current;
-      const drawX = bunny.x - scrollX;
-      const drawY = bunny.y - scrollY;
+      const viewX = Math.round(bunny.x - scrollX);
+      const viewY = Math.round(bunny.y - scrollY);
+      canvas.style.transform = `translate3d(${viewX}px,${viewY}px,0)`;
 
-      const vw = canvas.width;
-      const vh = canvas.height;
-      const isVisible = drawX > -BUNNY_SIZE && drawX < vw && drawY > -BUNNY_SIZE && drawY < vh;
+      // -----------------------------------------------------------------------
+      // УСЛОВНАЯ ПЕРЕРИСОВКА (только при смене кадра анимации)
+      // -----------------------------------------------------------------------
 
-      if (isVisible) {
-        const { sprite, flipX } = getCurrentSprite(bunny);
-        const cachedSprite = renderSpriteToCanvas(sprite, flipX);
-        ctx.drawImage(cachedSprite, drawX, drawY);
-        
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
-        ctx.beginPath();
-        ctx.ellipse(
-          drawX + BUNNY_SIZE / 2, 
-          drawY + BUNNY_SIZE - 2, 
-          BUNNY_SIZE / 3, 
-          4, 
-          0, 0, Math.PI * 2
-        );
-        ctx.fill();
+      const { sprite, flipX } = getCurrentSprite(bunny);
+      const cachedSprite = renderSpriteToCanvas(sprite, flipX);
+
+      if (cachedSprite !== prevSpriteRef.current) {
+        prevSpriteRef.current = cachedSprite;
+        redrawSprite(cachedSprite);
       }
-
-      const pad = 10;
-      prevDrawRect.current = {
-        x: drawX - pad,
-        y: drawY - pad,
-        w: BUNNY_SIZE + pad * 2,
-        h: BUNNY_SIZE + pad * 2,
-      };
       
       animationRef.current = requestAnimationFrame(gameLoop);
     };
     
-    // Начальная позиция - случайная в пределах экрана
     bunnyRef.current.x = Math.random() * (window.innerWidth - BUNNY_SIZE - 100) + 50;
     bunnyRef.current.y = Math.random() * (window.innerHeight - BUNNY_SIZE - 100) + 50;
+
+    // Начальная отрисовка спрайта
+    const { sprite: initSprite, flipX: initFlip } = getCurrentSprite(bunnyRef.current);
+    const initCached = renderSpriteToCanvas(initSprite, initFlip);
+    prevSpriteRef.current = initCached;
+    redrawSprite(initCached);
     
     const startLoop = (ts: number) => gameLoop(ts);
     const idle = (window as any).requestIdleCallback;
@@ -730,9 +696,8 @@ export default function PixelBunny() {
       setTimeout(() => requestAnimationFrame(startLoop), 200);
     }
 
-    // Очистка при размонтировании компонента
     return () => {
-      window.removeEventListener('resize', resizeCanvas);
+      window.removeEventListener('resize', handleResize);
       window.removeEventListener('scroll', handleScroll);
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mousedown', handleMouseDown);
@@ -751,12 +716,13 @@ export default function PixelBunny() {
   return (
     <canvas
       ref={canvasRef}
+      width={BUNNY_SIZE}
+      height={CANVAS_H}
       class="fixed top-0 left-0 pointer-events-none z-50"
       style={{ 
         imageRendering: 'pixelated',
         touchAction: 'none',
-        willChange: 'contents',
-        transform: 'translateZ(0)',
+        willChange: 'transform',
       }}
     />
   );
