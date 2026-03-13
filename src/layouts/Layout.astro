@@ -121,7 +121,7 @@ const structuredData = generateStructuredData(siteConfig);
 		<div
 			data-scroll-progress
 			class="fixed top-0 left-0 h-[3px] w-full z-[1001] origin-left"
-			style="transform: scaleX(0); background: linear-gradient(90deg, #ff2d95 0%, #e930ff 40%, #9945ff 70%, #00d9ff 100%)"
+			style="transform: scaleX(0); will-change: transform; background: linear-gradient(90deg, #ff2d95 0%, #e930ff 40%, #9945ff 70%, #00d9ff 100%)"
 		/>
 		<Navbar config={siteConfig} />
 		<div class="overflow-x-hidden">

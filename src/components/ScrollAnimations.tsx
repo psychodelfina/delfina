@@ -91,10 +91,11 @@ export default function ScrollAnimations() {
           opacity: 0,
           duration: 0.8,
           ease: 'power2.out',
+          force3D: true,
           scrollTrigger: {
             trigger: heading,
             start: 'top 90%',
-            toggleActions: 'play none none reverse',
+            once: true,
           },
         });
       });
@@ -106,16 +107,17 @@ export default function ScrollAnimations() {
           duration: 0.6,
           delay: 0.1,
           ease: 'power2.out',
+          force3D: true,
           scrollTrigger: {
             trigger: sub,
             start: 'top 90%',
-            toggleActions: 'play none none reverse',
+            once: true,
           },
         });
       });
 
       // =====================================================================
-      // PORTFOLIO — smooth staggered fade-in (no 3D transforms)
+      // PORTFOLIO — smooth staggered fade-in, GPU-composited
       // =====================================================================
       const portfolioItems = document.querySelectorAll('[data-scroll-portfolio]');
       if (portfolioItems.length) {
@@ -126,16 +128,17 @@ export default function ScrollAnimations() {
           duration: 0.8,
           stagger: 0.1,
           ease: 'power2.out',
+          force3D: true,
           scrollTrigger: {
             trigger: '#portfolio .grid',
             start: 'top 85%',
-            toggleActions: 'play none none reverse',
+            once: true,
           },
         });
       }
 
       // =====================================================================
-      // CERTIFICATES — earlier trigger, simpler animation
+      // CERTIFICATES — GPU-accelerated, once: true to avoid reverse recalc
       // =====================================================================
       document.querySelectorAll('[data-scroll-cert]').forEach((item, i) => {
         const fromLeft = i % 2 === 0;
@@ -144,10 +147,11 @@ export default function ScrollAnimations() {
           opacity: 0,
           duration: 0.7,
           ease: 'power2.out',
+          force3D: true,
           scrollTrigger: {
             trigger: item,
             start: 'top 95%',
-            toggleActions: 'play none none reverse',
+            once: true,
           },
         });
       });
@@ -159,10 +163,11 @@ export default function ScrollAnimations() {
           opacity: 0,
           duration: 0.8,
           ease: 'power2.out',
+          force3D: true,
           scrollTrigger: {
             trigger: certCta,
             start: 'top 95%',
-            toggleActions: 'play none none reverse',
+            once: true,
           },
         });
       }
@@ -178,10 +183,11 @@ export default function ScrollAnimations() {
           duration: 0.6,
           stagger: 0.08,
           ease: 'power2.out',
+          force3D: true,
           scrollTrigger: {
             trigger: '#faq-list',
             start: 'top 85%',
-            toggleActions: 'play none none reverse',
+            once: true,
           },
         });
       }

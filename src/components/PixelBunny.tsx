@@ -263,14 +263,47 @@ interface BunnyPosition {
 }
 
 // =============================================================================
+// КЭШИРОВАНИЕ СПРАЙТОВ В OFFSCREEN CANVAS
+// =============================================================================
+
+type SpriteKey = string;
+const spriteCache = new Map<SpriteKey, HTMLCanvasElement>();
+
+function renderSpriteToCanvas(sprite: number[][], flipX: boolean): HTMLCanvasElement {
+  const key: SpriteKey = `${sprite === bunnyFrontCry ? 'cry' : sprite === bunnyFront ? 'front' : sprite === bunnyEating1 ? 'eat1' : sprite === bunnyEating2 ? 'eat2' : sprite === bunnyRunRight1 ? 'run1' : 'run2'}_${flipX ? 'flip' : 'normal'}`;
+
+  const cached = spriteCache.get(key);
+  if (cached) return cached;
+
+  const offscreen = document.createElement('canvas');
+  offscreen.width = BUNNY_SIZE;
+  offscreen.height = BUNNY_SIZE;
+  const octx = offscreen.getContext('2d')!;
+
+  for (let row = 0; row < sprite.length; row++) {
+    for (let col = 0; col < sprite[row].length; col++) {
+      const color = colors[sprite[row][col]];
+      if (color !== 'transparent') {
+        octx.fillStyle = color;
+        const drawX = flipX
+          ? (SPRITE_SIZE - 1 - col) * PIXEL_SIZE
+          : col * PIXEL_SIZE;
+        octx.fillRect(drawX, row * PIXEL_SIZE, PIXEL_SIZE, PIXEL_SIZE);
+      }
+    }
+  }
+
+  spriteCache.set(key, offscreen);
+  return offscreen;
+}
+
+// =============================================================================
 // ОСНОВНОЙ КОМПОНЕНТ
 // =============================================================================
 
 export default function PixelBunny() {
-  // Рефы для хранения состояния между рендерами
   const canvasRef = useRef<HTMLCanvasElement>(null);
   
-  /** Состояние зайца (позиция, скорость, анимация) */
   const bunnyRef = useRef<BunnyPosition>({
     x: 100,
     y: 100,
@@ -285,62 +318,24 @@ export default function PixelBunny() {
     braveryCheckDone: false,
   });
   
-  /** Текущая позиция курсора/пальца */
   const pointerRef = useRef({ x: -1000, y: -1000 });
-  
-  /** ID текущей анимации для отмены при unmount */
   const animationRef = useRef<number>(0);
-  
-  /** Флаг, что заяц сейчас удерживается (для предотвращения выделения текста) */
   const isDraggingRef = useRef(false);
 
-  /**
-   * Отрисовка спрайта на canvas.
-   * @param ctx - Контекст canvas
-   * @param sprite - Двумерный массив спрайта
-   * @param x - X-координата
-   * @param y - Y-координата
-   * @param flipX - Отзеркалить по горизонтали
-   */
-  const drawSprite = (ctx: CanvasRenderingContext2D, sprite: number[][], x: number, y: number, flipX: boolean = false) => {
-    for (let row = 0; row < sprite.length; row++) {
-      for (let col = 0; col < sprite[row].length; col++) {
-        const color = colors[sprite[row][col]];
-        if (color !== 'transparent') {
-          ctx.fillStyle = color;
-          // Если нужно отзеркалить - рисуем с конца
-          const drawX = flipX 
-            ? x + (SPRITE_SIZE - 1 - col) * PIXEL_SIZE 
-            : x + col * PIXEL_SIZE;
-          ctx.fillRect(drawX, y + row * PIXEL_SIZE, PIXEL_SIZE, PIXEL_SIZE);
-        }
-      }
-    }
-  };
+  /** Предыдущая область отрисовки для dirty rect clearing */
+  const prevDrawRect = useRef({ x: 0, y: 0, w: 0, h: 0 });
 
-  /**
-   * Получение текущего спрайта в зависимости от состояния зайца.
-   * @param bunny - Текущее состояние зайца
-   * @returns Объект со спрайтом и флагом отзеркаливания
-   */
   const getCurrentSprite = (bunny: BunnyPosition): { sprite: number[][], flipX: boolean } => {
-    // Пойманный заяц - плачет
     if (bunny.state === 'caught') {
       return { sprite: bunnyFrontCry, flipX: false };
     }
-
-    // Жуёт морковку - чередуем кадры
     if (bunny.state === 'eating') {
       const eatingFrame = Math.floor(bunny.frame / EAT_ANIMATION_SPEED) % 2;
       return { sprite: eatingFrame === 0 ? bunnyEating1 : bunnyEating2, flipX: false };
     }
-    
-    // Простой (idle) - просто стоит
     if (bunny.state === 'idle') {
       return { sprite: bunnyFront, flipX: false };
     }
-    
-    // Бежит - чередуем кадры бега, отзеркаливаем если бежит влево
     const runFrame = Math.floor(bunny.frame / RUN_ANIMATION_SPEED) % 2;
     const sprite = runFrame === 0 ? bunnyRunRight1 : bunnyRunRight2;
     return { sprite, flipX: bunny.direction === 'left' };
@@ -540,9 +535,6 @@ export default function PixelBunny() {
       const bunny = bunnyRef.current;
       const pointer = pointerRef.current;
       
-      // Очистка canvas
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      
       // Расстояние до курсора/пальца
       const dx = pointer.x - (bunny.x + BUNNY_SIZE / 2);
       const dy = pointer.y - (bunny.y + BUNNY_SIZE / 2);
@@ -662,19 +654,21 @@ export default function PixelBunny() {
       }
       
       // -----------------------------------------------------------------------
-      // ОТРИСОВКА
+      // ОТРИСОВКА (dirty rect — очищаем только предыдущую область)
       // -----------------------------------------------------------------------
       
-      // Отрисовка спрайта зайца (с учётом прокрутки для fixed canvas)
+      const prev = prevDrawRect.current;
+      ctx.clearRect(prev.x, prev.y, prev.w, prev.h);
+
       const scrollX = window.scrollX || 0;
       const scrollY = window.scrollY || 0;
       const drawX = bunny.x - scrollX;
       const drawY = bunny.y - scrollY;
       
       const { sprite, flipX } = getCurrentSprite(bunny);
-      drawSprite(ctx, sprite, drawX, drawY, flipX);
+      const cachedSprite = renderSpriteToCanvas(sprite, flipX);
+      ctx.drawImage(cachedSprite, drawX, drawY);
       
-      // Добавляем тень под зайцем для объёма
       ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
       ctx.beginPath();
       ctx.ellipse(
@@ -685,8 +679,15 @@ export default function PixelBunny() {
         0, 0, Math.PI * 2
       );
       ctx.fill();
+
+      const pad = 10;
+      prevDrawRect.current = {
+        x: drawX - pad,
+        y: drawY - pad,
+        w: BUNNY_SIZE + pad * 2,
+        h: BUNNY_SIZE + pad * 2,
+      };
       
-      // Запланировать следующий кадр
       animationRef.current = requestAnimationFrame(gameLoop);
     };
     
