@@ -457,10 +457,17 @@ export default function PixelBunny() {
     scrollRef.current.x = window.scrollX || 0;
     scrollRef.current.y = window.scrollY || 0;
 
+    const updateTransform = () => {
+      const bunny = bunnyRef.current;
+      const { x: sx, y: sy } = scrollRef.current;
+      canvas.style.transform = `translate3d(${Math.round(bunny.x - sx)}px,${Math.round(bunny.y - sy)}px,0)`;
+    };
+
     const handleResize = () => updateDocSize();
     const handleScroll = () => {
       scrollRef.current.x = window.scrollX || 0;
       scrollRef.current.y = window.scrollY || 0;
+      updateTransform();
     };
 
     window.addEventListener('resize', handleResize);
@@ -655,14 +662,7 @@ export default function PixelBunny() {
         bunny.vy = -Math.abs(bunny.vy);
       }
       
-      // -----------------------------------------------------------------------
-      // ПОЗИЦИОНИРОВАНИЕ ЧЕРЕЗ CSS TRANSFORM (GPU-компоситор)
-      // -----------------------------------------------------------------------
-
-      const { x: scrollX, y: scrollY } = scrollRef.current;
-      const viewX = Math.round(bunny.x - scrollX);
-      const viewY = Math.round(bunny.y - scrollY);
-      canvas.style.transform = `translate3d(${viewX}px,${viewY}px,0)`;
+      updateTransform();
 
       // -----------------------------------------------------------------------
       // УСЛОВНАЯ ПЕРЕРИСОВКА (только при смене кадра анимации)
@@ -682,19 +682,17 @@ export default function PixelBunny() {
     bunnyRef.current.x = Math.random() * (window.innerWidth - BUNNY_SIZE - 100) + 50;
     bunnyRef.current.y = Math.random() * (window.innerHeight - BUNNY_SIZE - 100) + 50;
 
-    // Начальная отрисовка спрайта
+    updateTransform();
+
     const { sprite: initSprite, flipX: initFlip } = getCurrentSprite(bunnyRef.current);
     const initCached = renderSpriteToCanvas(initSprite, initFlip);
     prevSpriteRef.current = initCached;
     redrawSprite(initCached);
+
+    canvas.style.opacity = '1';
     
     const startLoop = (ts: number) => gameLoop(ts);
-    const idle = (window as any).requestIdleCallback;
-    if (idle) {
-      idle(() => requestAnimationFrame(startLoop));
-    } else {
-      setTimeout(() => requestAnimationFrame(startLoop), 200);
-    }
+    animationRef.current = requestAnimationFrame(startLoop);
 
     return () => {
       window.removeEventListener('resize', handleResize);
@@ -723,6 +721,7 @@ export default function PixelBunny() {
         imageRendering: 'pixelated',
         touchAction: 'none',
         willChange: 'transform',
+        opacity: 0,
       }}
     />
   );
