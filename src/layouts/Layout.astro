@@ -2,6 +2,7 @@
 import { Seo } from 'astro-seo-meta';
 import { Schema } from 'astro-seo-schema';
 import { siteConfig, generateStructuredData } from '../config/site.config';
+import Navbar from '../components/Navbar.astro';
 
 interface Props {
   title?: string;
@@ -110,12 +111,22 @@ const structuredData = generateStructuredData(siteConfig);
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 		<link rel="dns-prefetch" href="https://fonts.googleapis.com" />
 		<link rel="dns-prefetch" href="https://fonts.gstatic.com" />
+		<link rel="dns-prefetch" href="https://vk.com" />
+		<link rel="dns-prefetch" href="https://www.tiktok.com" />
 		
 		<!-- Fonts -->
 		<link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;500;600;700&family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 	</head>
-	<body class="font-body bg-bg-dark text-white leading-relaxed overflow-x-hidden">
-		<slot />
+	<body class="font-body bg-bg-dark text-white leading-relaxed">
+		<div
+			data-scroll-progress
+			class="fixed top-0 left-0 h-[3px] w-full z-[1001] origin-left"
+			style="transform: scaleX(0); background: linear-gradient(90deg, #ff2d95 0%, #e930ff 40%, #9945ff 70%, #00d9ff 100%)"
+		/>
+		<Navbar config={siteConfig} />
+		<div class="overflow-x-hidden">
+			<slot />
+		</div>
 	</body>
 </html>
 
@@ -143,6 +154,15 @@ const structuredData = generateStructuredData(siteConfig);
 	/* Smooth anchor scrolling */
 	html {
 		scroll-behavior: smooth;
+	}
+
+	/* Navbar scroll state */
+	#main-nav {
+		transition: background 0.3s ease, box-shadow 0.3s ease;
+	}
+	#main-nav.nav-scrolled {
+		background: rgba(10, 6, 18, 0.95);
+		box-shadow: 0 4px 30px rgba(255, 45, 149, 0.1);
 	}
 
 	/* Hide default details marker in WebKit browsers */

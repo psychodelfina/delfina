@@ -9,7 +9,7 @@ interface Props {
 const { config } = Astro.props;
 ---
 
-<nav class="fixed top-0 left-0 right-0 z-[1000] bg-bg-dark/85 backdrop-blur-xl border-b border-neon-pink/20">
+<nav id="main-nav" class="fixed top-0 left-0 right-0 z-[1000] bg-bg-dark/85 backdrop-blur-xl border-b border-neon-pink/20" style="transform: none !important; opacity: 1 !important;">
   <div class="max-w-[1200px] mx-auto px-6 py-4 flex items-center justify-between gap-6">
     <a href="#" class="font-heading text-xl font-bold bg-gradient-neon bg-clip-text text-transparent">
       {config.hero.name}
@@ -33,3 +33,16 @@ const { config } = Astro.props;
     </a>
   </div>
 </nav>
+
+<script>
+  const nav = document.getElementById('main-nav');
+  if (nav) {
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > 80) {
+        nav.classList.add('nav-scrolled');
+      } else {
+        nav.classList.remove('nav-scrolled');
+      }
+    }, { passive: true });
+  }
+</script>

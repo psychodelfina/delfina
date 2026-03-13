@@ -11,6 +11,9 @@ interface Props {
 
 const { config } = Astro.props;
 const { contacts } = config;
+
+const vkShortName = new URL(contacts.vk).pathname.replace('/', '');
+const tiktokUsername = new URL(contacts.tiktok).pathname.replace('/@', '').replace('/', '');
 ---
 
 <section
@@ -20,15 +23,15 @@ const { contacts } = config;
   style="background: linear-gradient(180deg, transparent 0%, rgba(153, 69, 255, 0.05) 50%, transparent 100%)"
 >
   <div class="max-w-[1200px] mx-auto px-6">
-    <h2 id="contacts-heading" class="font-heading text-3xl md:text-4xl text-center mb-4 flex items-center justify-center gap-4">
+    <h2 id="contacts-heading" class="font-heading text-3xl md:text-4xl text-center mb-4 flex items-center justify-center gap-4" data-scroll-heading>
       <span class="text-3xl" aria-hidden="true">📱</span>
       Контакты
     </h2>
-    <p class="text-center text-text-muted text-lg mb-16">Найдите меня в социальных сетях</p>
+    <p class="text-center text-text-muted text-lg mb-16" data-scroll-subtitle>Найдите меня в социальных сетях</p>
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16 max-w-[400px] md:max-w-none mx-auto">
-      <!-- Instagram -->
-      <div class="bg-bg-card rounded-3xl p-6 border border-white/10 hover:-translate-y-2 hover:shadow-[0_20px_40px_rgba(225,48,108,0.2)] transition-all duration-300">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-16 items-start max-w-[500px] md:max-w-none mx-auto">
+      <!-- Instagram (no official profile widget) -->
+      <div class="bg-bg-card rounded-3xl p-6 border border-white/10 hover:-translate-y-1 hover:shadow-[0_20px_40px_rgba(225,48,108,0.15)] transition-all duration-300" data-scroll-contact>
         <div class="flex items-center gap-3 mb-5 font-semibold text-lg">
           <InstagramIcon size={32} />
           <span>Instagram</span>
@@ -41,28 +44,53 @@ const { contacts } = config;
         </a>
       </div>
 
-      <!-- VK -->
-      <div class="bg-bg-card rounded-3xl p-6 border border-white/10 hover:-translate-y-2 hover:shadow-[0_20px_40px_rgba(0,119,255,0.2)] transition-all duration-300">
+      <!-- VK Community Widget -->
+      <div class="bg-bg-card rounded-3xl p-6 border border-white/10 hover:-translate-y-1 hover:shadow-[0_20px_40px_rgba(0,119,255,0.15)] transition-all duration-300" data-scroll-contact>
         <div class="flex items-center gap-3 mb-5 font-semibold text-lg">
           <VKIcon size={32} />
           <span>ВКонтакте</span>
         </div>
-        <a href={contacts.vk} target="_blank" rel="noopener noreferrer" aria-label="Подписаться на ВКонтакте psychodelfina" class="block rounded-2xl overflow-hidden">
-          <div class="bg-vk py-10 px-6 text-center flex flex-col gap-3 hover:opacity-90 transition-opacity">
-            <span class="text-xl font-bold">psychodelfina</span>
-            <span class="text-sm opacity-90">Подписаться →</span>
+        <div class="rounded-2xl overflow-hidden">
+          <div id="vk_groups" data-vk-name={vkShortName}>
+            <a href={contacts.vk} target="_blank" rel="noopener noreferrer" aria-label="Подписаться на ВКонтакте psychodelfina" class="block">
+              <div class="bg-vk py-10 px-6 text-center flex flex-col gap-3 hover:opacity-90 transition-opacity rounded-2xl">
+                <span class="text-xl font-bold">{vkShortName}</span>
+                <span class="text-sm opacity-90">Подписаться →</span>
+              </div>
+            </a>
           </div>
-        </a>
+        </div>
       </div>
 
-      <!-- TikTok -->
-      <div class="bg-bg-card rounded-3xl p-6 border border-white/10 hover:-translate-y-2 hover:shadow-[0_20px_40px_rgba(255,0,80,0.2)] transition-all duration-300">
+      <!-- TikTok Creator Embed -->
+      <div class="bg-bg-card rounded-3xl p-6 border border-white/10 hover:-translate-y-1 hover:shadow-[0_20px_40px_rgba(255,0,80,0.15)] transition-all duration-300" data-scroll-contact>
         <div class="flex items-center gap-3 mb-5 font-semibold text-lg">
           <TikTokIcon size={32} />
           <span>TikTok</span>
         </div>
-        <a href={contacts.tiktok} target="_blank" rel="noopener noreferrer" aria-label="Подписаться на TikTok @psychodelfina" class="block rounded-2xl overflow-hidden">
-          <div class="bg-tiktok py-10 px-6 text-center flex flex-col gap-3 hover:opacity-90 transition-opacity">
+        <div class="rounded-2xl tiktok-widget-wrap">
+          <blockquote
+            class="tiktok-embed"
+            cite={contacts.tiktok}
+            data-unique-id={tiktokUsername}
+            data-embed-type="creator"
+            style="max-width:100%;min-width:250px;margin:0;"
+          >
+            <section>
+              <a target="_blank" rel="noopener noreferrer" href={contacts.tiktok}>@{tiktokUsername}</a>
+            </section>
+          </blockquote>
+        </div>
+      </div>
+
+      <!-- Telegram Channel -->
+      <div class="bg-bg-card rounded-3xl p-6 border border-white/10 hover:-translate-y-1 hover:shadow-[0_20px_40px_rgba(0,136,204,0.15)] transition-all duration-300" data-scroll-contact>
+        <div class="flex items-center gap-3 mb-5 font-semibold text-lg">
+          <TelegramIcon size={32} />
+          <span>Telegram канал</span>
+        </div>
+        <a href={contacts.telegram} target="_blank" rel="noopener noreferrer" aria-label="Подписаться на Telegram канал psychodelfina" class="block rounded-2xl overflow-hidden">
+          <div class="bg-gradient-to-br from-[#0088cc] to-[#0066aa] py-10 px-6 text-center flex flex-col gap-3 hover:opacity-90 transition-opacity">
             <span class="text-xl font-bold">@psychodelfina</span>
             <span class="text-sm opacity-90">Подписаться →</span>
           </div>
@@ -72,7 +100,7 @@ const { contacts } = config;
 
     <!-- Main CTA -->
     <div class="flex justify-center">
-      <div class="text-center p-10 md:p-16 bg-gradient-to-br from-neon-pink/10 to-neon-purple/10 rounded-[32px] border border-neon-pink/30 max-w-[600px]">
+      <div class="text-center p-10 md:p-16 bg-gradient-to-br from-neon-pink/10 to-neon-purple/10 rounded-[32px] border border-neon-pink/30 max-w-[600px]" data-scroll-cta>
         <h3 class="font-heading text-2xl md:text-3xl mb-4 bg-gradient-neon bg-clip-text text-transparent">
           Готовы к яркой татуировке?
         </h3>
@@ -91,3 +119,48 @@ const { contacts } = config;
     </div>
   </div>
 </section>
+
+<style is:global>
+  .tiktok-widget-wrap iframe {
+    border-radius: 1rem !important;
+    overflow: hidden !important;
+  }
+  .tiktok-widget-wrap > section {
+    display: none !important;
+  }
+  #vk_groups iframe {
+    border-radius: 1rem !important;
+  }
+</style>
+
+<script is:inline>
+(function () {
+  var vkEl = document.getElementById('vk_groups');
+  if (!vkEl) return;
+
+  var groupName = vkEl.getAttribute('data-vk-name');
+
+  var vkScript = document.createElement('script');
+  vkScript.src = 'https://vk.com/js/api/openapi.js?169';
+  vkScript.async = true;
+  vkScript.onload = function () {
+    try {
+      VK.init({ apiId: 0, onlyWidgets: true });
+      VK.Widgets.Group('vk_groups', {
+        mode: 4,
+        wide: 1,
+        color1: '1A1025',
+        color2: 'FFFFFF',
+        color3: '9945FF'
+      }, groupName);
+    } catch (e) { /* fallback link stays visible */ }
+  };
+  document.head.appendChild(vkScript);
+
+  var ttScript = document.createElement('script');
+  ttScript.src = 'https://www.tiktok.com/embed.js';
+  ttScript.async = true;
+  document.body.appendChild(ttScript);
+
+})();
+</script>

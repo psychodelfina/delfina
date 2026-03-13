@@ -2,7 +2,6 @@
 import Layout from '../layouts/Layout.astro';
 import { siteConfig } from '../config/site.config';
 
-import Navbar from '../components/Navbar.astro';
 import Hero from '../components/Hero.astro';
 import Portfolio from '../components/Portfolio.astro';
 import Certificates from '../components/Certificates.astro';
@@ -13,12 +12,12 @@ import Footer from '../components/Footer.astro';
 import ParallaxBackground from '../components/ParallaxBackground';
 import Lightbox from '../components/Lightbox';
 import PixelBunny from '../components/PixelBunny';
+import ScrollAnimations from '../components/ScrollAnimations';
 ---
 
 <Layout title={siteConfig.seo.title} description={siteConfig.seo.description}>
 	<PixelBunny client:load />
 	<ParallaxBackground client:load />
-	<Navbar config={siteConfig} />
 	<Hero config={siteConfig} />
 	<Portfolio images={siteConfig.portfolio} />
 	<Certificates images={siteConfig.certificates} telegramUrl={siteConfig.contacts.telegram} />
@@ -26,4 +25,5 @@ import PixelBunny from '../components/PixelBunny';
 	<Contacts config={siteConfig} />
 	<Footer config={siteConfig} />
 	<Lightbox client:load />
+	<ScrollAnimations client:load />
 </Layout>

@@ -8,17 +8,17 @@ const { items } = Astro.props;
 
 <section class="py-6 relative z-[1]" id="faq" aria-labelledby="faq-heading">
   <div class="max-w-[1200px] mx-auto px-6">
-    <h2 id="faq-heading" class="font-heading text-3xl md:text-4xl text-center mb-4 flex items-center justify-center gap-4">
+    <h2 id="faq-heading" class="font-heading text-3xl md:text-4xl text-center mb-4 flex items-center justify-center gap-4" data-scroll-heading>
       <span class="text-3xl" aria-hidden="true">❓</span>
       Частые вопросы
     </h2>
-    <p class="text-center text-text-muted text-lg mb-16">Ответы на популярные вопросы о тату</p>
+    <p class="text-center text-text-muted text-lg mb-16" data-scroll-subtitle>Ответы на популярные вопросы о тату</p>
 
-    <div class="max-w-[800px] mx-auto flex flex-col gap-4">
+    <div class="max-w-[800px] mx-auto flex flex-col gap-4" id="faq-list">
       {items.map((item, index) => (
         <details
-          class="faq-item bg-bg-card rounded-2xl border border-neon-pink/10 overflow-hidden opacity-0 animate-fade-in-up hover:border-neon-pink/30 transition-colors duration-300 group open:border-neon-pink"
-          style={`animation-delay: ${index * 0.1}s`}
+          class="faq-item bg-bg-card rounded-2xl border border-neon-pink/10 overflow-hidden hover:border-neon-pink/30 transition-colors duration-300 group open:border-neon-pink"
+          data-scroll-faq
         >
           <summary class="p-6 cursor-pointer flex items-center justify-between font-semibold text-lg list-none">
             <span>{item.question}</span>
