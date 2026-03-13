@@ -52,6 +52,7 @@ export default {
         'instagram': 'linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)',
         'vk': 'linear-gradient(135deg, #0077ff 0%, #0055cc 100%)',
         'tiktok': 'linear-gradient(135deg, #00f2ea 0%, #ff0050 100%)',
+        'telegram': 'linear-gradient(135deg, #0088cc 0%, #0066aa 100%)',
       },
       boxShadow: {
         'glow-pink': '0 0 20px rgba(255, 45, 149, 0.5), 0 0 40px rgba(255, 45, 149, 0.3)',

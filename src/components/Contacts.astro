@@ -14,6 +14,46 @@ const { contacts } = config;
 
 const vkShortName = new URL(contacts.vk).pathname.replace('/', '');
 const tiktokUsername = new URL(contacts.tiktok).pathname.replace('/@', '').replace('/', '');
+const telegramUsername = new URL(contacts.telegram).pathname.replace('/', '');
+
+const socials = [
+  {
+    name: 'Instagram',
+    icon: 'instagram',
+    url: contacts.instagram,
+    handle: '@psychodelfina',
+    bg: 'bg-instagram',
+    shadow: 'hover:shadow-[0_20px_40px_rgba(225,48,108,0.15)]',
+    label: 'Подписаться на Instagram @psychodelfina',
+  },
+  {
+    name: 'ВКонтакте',
+    icon: 'vk',
+    url: contacts.vk,
+    handle: vkShortName,
+    bg: 'bg-vk',
+    shadow: 'hover:shadow-[0_20px_40px_rgba(0,119,255,0.15)]',
+    label: `Подписаться на ВКонтакте ${vkShortName}`,
+  },
+  {
+    name: 'TikTok',
+    icon: 'tiktok',
+    url: contacts.tiktok,
+    handle: `@${tiktokUsername}`,
+    bg: 'bg-tiktok',
+    shadow: 'hover:shadow-[0_20px_40px_rgba(255,0,80,0.15)]',
+    label: `Подписаться на TikTok @${tiktokUsername}`,
+  },
+  {
+    name: 'Telegram',
+    icon: 'telegram',
+    url: contacts.telegram,
+    handle: `@${telegramUsername}`,
+    bg: 'bg-telegram',
+    shadow: 'hover:shadow-[0_20px_40px_rgba(0,136,204,0.15)]',
+    label: `Подписаться на Telegram @${telegramUsername}`,
+  },
+];
 ---
 
 <section
@@ -30,72 +70,23 @@ const tiktokUsername = new URL(contacts.tiktok).pathname.replace('/@', '').repla
     <p class="text-center text-text-muted text-lg mb-16" data-scroll-subtitle>Найдите меня в социальных сетях</p>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-16 items-start max-w-[500px] md:max-w-none mx-auto">
-      <!-- Instagram (no official profile widget) -->
-      <div class="bg-bg-card rounded-3xl p-6 border border-white/10 hover:-translate-y-1 hover:shadow-[0_20px_40px_rgba(225,48,108,0.15)] transition-all duration-300" data-scroll-contact>
-        <div class="flex items-center gap-3 mb-5 font-semibold text-lg">
-          <InstagramIcon size={32} />
-          <span>Instagram</span>
-        </div>
-        <a href={contacts.instagram} target="_blank" rel="noopener noreferrer" aria-label="Подписаться на Instagram @psychodelfina" class="block rounded-2xl overflow-hidden">
-          <div class="bg-instagram py-10 px-6 text-center flex flex-col gap-3 hover:opacity-90 transition-opacity">
-            <span class="text-xl font-bold">@psychodelfina</span>
-            <span class="text-sm opacity-90">Подписаться →</span>
+      {socials.map((s) => (
+        <div class={`bg-bg-card rounded-3xl p-6 border border-white/10 hover:-translate-y-1 ${s.shadow} transition-all duration-300`} data-scroll-contact>
+          <div class="flex items-center gap-3 mb-5 font-semibold text-lg">
+            {s.icon === 'instagram' && <InstagramIcon size={32} />}
+            {s.icon === 'vk' && <VKIcon size={32} />}
+            {s.icon === 'tiktok' && <TikTokIcon size={32} />}
+            {s.icon === 'telegram' && <TelegramIcon size={32} />}
+            <span>{s.name}</span>
           </div>
-        </a>
-      </div>
-
-      <!-- VK Community Widget -->
-      <div class="bg-bg-card rounded-3xl p-6 border border-white/10 hover:-translate-y-1 hover:shadow-[0_20px_40px_rgba(0,119,255,0.15)] transition-all duration-300" data-scroll-contact>
-        <div class="flex items-center gap-3 mb-5 font-semibold text-lg">
-          <VKIcon size={32} />
-          <span>ВКонтакте</span>
+          <a href={s.url} target="_blank" rel="noopener noreferrer" aria-label={s.label} class="block rounded-2xl overflow-hidden">
+            <div class={`${s.bg} py-10 px-6 text-center flex flex-col gap-3 hover:opacity-90 transition-opacity`}>
+              <span class="text-xl font-bold">{s.handle}</span>
+              <span class="text-sm opacity-90">Подписаться →</span>
+            </div>
+          </a>
         </div>
-        <div class="rounded-2xl overflow-hidden">
-          <div id="vk_groups" data-vk-name={vkShortName}>
-            <a href={contacts.vk} target="_blank" rel="noopener noreferrer" aria-label="Подписаться на ВКонтакте psychodelfina" class="block">
-              <div class="bg-vk py-10 px-6 text-center flex flex-col gap-3 hover:opacity-90 transition-opacity rounded-2xl">
-                <span class="text-xl font-bold">{vkShortName}</span>
-                <span class="text-sm opacity-90">Подписаться →</span>
-              </div>
-            </a>
-          </div>
-        </div>
-      </div>
-
-      <!-- TikTok Creator Embed -->
-      <div class="bg-bg-card rounded-3xl p-6 border border-white/10 hover:-translate-y-1 hover:shadow-[0_20px_40px_rgba(255,0,80,0.15)] transition-all duration-300" data-scroll-contact>
-        <div class="flex items-center gap-3 mb-5 font-semibold text-lg">
-          <TikTokIcon size={32} />
-          <span>TikTok</span>
-        </div>
-        <div class="rounded-2xl tiktok-widget-wrap">
-          <blockquote
-            class="tiktok-embed"
-            cite={contacts.tiktok}
-            data-unique-id={tiktokUsername}
-            data-embed-type="creator"
-            style="max-width:100%;min-width:250px;margin:0;"
-          >
-            <section>
-              <a target="_blank" rel="noopener noreferrer" href={contacts.tiktok}>@{tiktokUsername}</a>
-            </section>
-          </blockquote>
-        </div>
-      </div>
-
-      <!-- Telegram Channel -->
-      <div class="bg-bg-card rounded-3xl p-6 border border-white/10 hover:-translate-y-1 hover:shadow-[0_20px_40px_rgba(0,136,204,0.15)] transition-all duration-300" data-scroll-contact>
-        <div class="flex items-center gap-3 mb-5 font-semibold text-lg">
-          <TelegramIcon size={32} />
-          <span>Telegram канал</span>
-        </div>
-        <a href={contacts.telegram} target="_blank" rel="noopener noreferrer" aria-label="Подписаться на Telegram канал psychodelfina" class="block rounded-2xl overflow-hidden">
-          <div class="bg-gradient-to-br from-[#0088cc] to-[#0066aa] py-10 px-6 text-center flex flex-col gap-3 hover:opacity-90 transition-opacity">
-            <span class="text-xl font-bold">@psychodelfina</span>
-            <span class="text-sm opacity-90">Подписаться →</span>
-          </div>
-        </a>
-      </div>
+      ))}
     </div>
 
     <!-- Main CTA -->
@@ -119,48 +110,3 @@ const tiktokUsername = new URL(contacts.tiktok).pathname.replace('/@', '').repla
     </div>
   </div>
 </section>
-
-<style is:global>
-  .tiktok-widget-wrap iframe {
-    border-radius: 1rem !important;
-    overflow: hidden !important;
-  }
-  .tiktok-widget-wrap > section {
-    display: none !important;
-  }
-  #vk_groups iframe {
-    border-radius: 1rem !important;
-  }
-</style>
-
-<script is:inline>
-(function () {
-  var vkEl = document.getElementById('vk_groups');
-  if (!vkEl) return;
-
-  var groupName = vkEl.getAttribute('data-vk-name');
-
-  var vkScript = document.createElement('script');
-  vkScript.src = 'https://vk.com/js/api/openapi.js?169';
-  vkScript.async = true;
-  vkScript.onload = function () {
-    try {
-      VK.init({ apiId: 0, onlyWidgets: true });
-      VK.Widgets.Group('vk_groups', {
-        mode: 4,
-        wide: 1,
-        color1: '1A1025',
-        color2: 'FFFFFF',
-        color3: '9945FF'
-      }, groupName);
-    } catch (e) { /* fallback link stays visible */ }
-  };
-  document.head.appendChild(vkScript);
-
-  var ttScript = document.createElement('script');
-  ttScript.src = 'https://www.tiktok.com/embed.js';
-  ttScript.async = true;
-  document.body.appendChild(ttScript);
-
-})();
-</script>
