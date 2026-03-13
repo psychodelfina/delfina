@@ -29,7 +29,7 @@ const structuredData = generateStructuredData(siteConfig);
 ---
 
 <!doctype html>
-<html lang="ru" class="scroll-smooth">
+<html lang="ru">
 	<head>
 		<!-- Primary Meta Tags (via astro-seo-meta) -->
 		<meta charset="UTF-8" />
@@ -116,6 +116,33 @@ const structuredData = generateStructuredData(siteConfig);
 		<div class="overflow-x-hidden">
 			<slot />
 		</div>
+		<script>
+			document.addEventListener('click', (e) => {
+				const anchor = (e.target as HTMLElement).closest('a[href^="#"]');
+				if (!anchor) return;
+				const id = anchor.getAttribute('href')!;
+				if (id === '#') {
+					e.preventDefault();
+					window.scrollTo({ top: 0, behavior: 'smooth' });
+					return;
+				}
+				const target = document.querySelector(id);
+				if (target) {
+					e.preventDefault();
+					target.scrollIntoView({ behavior: 'smooth' });
+				}
+			});
+
+			window.addEventListener('pageshow', (e) => {
+				if (e.persisted) {
+					document.body.style.overflow = '';
+					document.body.style.userSelect = '';
+					document.body.style.webkitUserSelect = '';
+
+					window.dispatchEvent(new CustomEvent('bfcache-restore'));
+				}
+			});
+		</script>
 	</body>
 </html>
 
@@ -138,11 +165,6 @@ const structuredData = generateStructuredData(siteConfig);
 	::selection {
 		background: #ff2d95;
 		color: white;
-	}
-
-	/* Smooth anchor scrolling */
-	html {
-		scroll-behavior: smooth;
 	}
 
 	/* Navbar scroll state */

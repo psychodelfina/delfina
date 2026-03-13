@@ -54,9 +54,16 @@ export default function ScrollAnimations() {
       updateProgress();
     }
 
+    const onBfcacheRestore = () => {
+      ScrollTrigger.refresh();
+      updateProgress();
+    };
+    window.addEventListener('bfcache-restore', onBfcacheRestore);
+
     return () => {
       mm.revert();
       window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('bfcache-restore', onBfcacheRestore);
       cancelAnimationFrame(rafId);
       resizeObserver?.disconnect();
     };

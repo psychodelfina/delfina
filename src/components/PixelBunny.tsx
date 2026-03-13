@@ -517,6 +517,11 @@ export default function PixelBunny() {
       pointerRef.current = { x: -1000, y: -1000 };
     };
 
+    const onBfcacheRestore = () => {
+      lastTimeRef.current = 0;
+      updateDocSize();
+    };
+
     document.addEventListener('mousemove', handleMouseMove, { passive: true });
     document.addEventListener('mousedown', handleMouseDown);
     document.addEventListener('mouseup', handleMouseUp);
@@ -524,6 +529,7 @@ export default function PixelBunny() {
     document.addEventListener('touchmove', handleTouchMove, { passive: false });
     document.addEventListener('touchend', handleTouchEnd);
     document.addEventListener('touchcancel', handleTouchEnd);
+    window.addEventListener('bfcache-restore', onBfcacheRestore);
 
     // =========================================================================
     // ГЛАВНЫЙ ИГРОВОЙ ЦИКЛ
@@ -686,6 +692,7 @@ export default function PixelBunny() {
 
     return () => {
       window.removeEventListener('resize', handleResize);
+      window.removeEventListener('bfcache-restore', onBfcacheRestore);
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mousedown', handleMouseDown);
       document.removeEventListener('mouseup', handleMouseUp);
