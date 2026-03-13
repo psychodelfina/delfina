@@ -16,14 +16,14 @@ import ScrollAnimations from '../components/ScrollAnimations';
 ---
 
 <Layout title={siteConfig.seo.title} description={siteConfig.seo.description}>
-	<PixelBunny client:idle />
-	<ParallaxBackground client:idle />
+	<PixelBunny client:load />
+	<ParallaxBackground client:load />
 	<Hero config={siteConfig} />
 	<Portfolio images={siteConfig.portfolio} />
 	<Certificates images={siteConfig.certificates} telegramUrl={siteConfig.contacts.telegram} />
 	<FAQ items={siteConfig.faq} />
 	<Contacts config={siteConfig} />
 	<Footer config={siteConfig} />
-	<Lightbox client:idle />
-	<ScrollAnimations client:idle />
+	<Lightbox client:load />
+	<ScrollAnimations client:load />
 </Layout>

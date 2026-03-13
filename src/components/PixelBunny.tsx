@@ -520,6 +520,8 @@ export default function PixelBunny() {
     const onBfcacheRestore = () => {
       lastTimeRef.current = 0;
       updateDocSize();
+      spriteCache.clear();
+      prevSpriteRef.current = null;
     };
 
     document.addEventListener('mousemove', handleMouseMove, { passive: true });
