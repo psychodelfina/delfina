@@ -18,12 +18,12 @@ import ScrollAnimations from '../components/ScrollAnimations';
 <Layout title={siteConfig.seo.title} description={siteConfig.seo.description}>
 	<PixelBunny client:load />
 	<ParallaxBackground client:load />
-	<Hero config={siteConfig} />
-	<Portfolio images={siteConfig.portfolio} />
-	<Certificates images={siteConfig.certificates} telegramUrl={siteConfig.contacts.telegram} />
-	<FAQ items={siteConfig.faq} />
-	<Contacts config={siteConfig} />
-	<Footer config={siteConfig} />
+	<Hero config={siteConfig}  client:load />
+	<Portfolio images={siteConfig.portfolio}  client:load />
+	<Certificates images={siteConfig.certificates} telegramUrl={siteConfig.contacts.telegram}  client:load />
+	<FAQ items={siteConfig.faq}  client:load />
+	<Contacts config={siteConfig}  client:load />
+	<Footer config={siteConfig}  client:load />
 	<Lightbox client:load />
 	<ScrollAnimations client:load />
 </Layout>
