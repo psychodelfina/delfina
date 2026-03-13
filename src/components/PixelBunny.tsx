@@ -333,9 +333,6 @@ export default function PixelBunny() {
   const isDraggingRef = useRef(false);
   const lastTimeRef = useRef<number>(0);
 
-  /** Кешированная позиция прокрутки (обновляется через passive listener) */
-  const scrollRef = useRef({ x: 0, y: 0 });
-
   /** Кешированные размеры документа (обновляются при resize) */
   const docSizeRef = useRef({ w: 0, h: 0 });
 
@@ -442,6 +439,9 @@ export default function PixelBunny() {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
+    // Перемещаем canvas в document.body для корректного absolute-позиционирования
+    document.body.appendChild(canvas);
+
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
@@ -454,24 +454,14 @@ export default function PixelBunny() {
     };
     updateDocSize();
 
-    scrollRef.current.x = window.scrollX || 0;
-    scrollRef.current.y = window.scrollY || 0;
-
     const updateTransform = () => {
       const bunny = bunnyRef.current;
-      const { x: sx, y: sy } = scrollRef.current;
-      canvas.style.transform = `translate3d(${Math.round(bunny.x - sx)}px,${Math.round(bunny.y - sy)}px,0)`;
+      canvas.style.transform = `translate3d(${Math.round(bunny.x)}px,${Math.round(bunny.y)}px,0)`;
     };
 
     const handleResize = () => updateDocSize();
-    const handleScroll = () => {
-      scrollRef.current.x = window.scrollX || 0;
-      scrollRef.current.y = window.scrollY || 0;
-      updateTransform();
-    };
 
     window.addEventListener('resize', handleResize);
-    window.addEventListener('scroll', handleScroll, { passive: true });
 
     const getPageCoords = (clientX: number, clientY: number) => ({
       x: clientX + (window.scrollX || window.pageXOffset || document.documentElement.scrollLeft || 0),
@@ -696,7 +686,6 @@ export default function PixelBunny() {
 
     return () => {
       window.removeEventListener('resize', handleResize);
-      window.removeEventListener('scroll', handleScroll);
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mousedown', handleMouseDown);
       document.removeEventListener('mouseup', handleMouseUp);
@@ -705,6 +694,7 @@ export default function PixelBunny() {
       document.removeEventListener('touchend', handleTouchEnd);
       document.removeEventListener('touchcancel', handleTouchEnd);
       cancelAnimationFrame(animationRef.current);
+      if (canvas.parentNode) canvas.parentNode.removeChild(canvas);
       
       document.body.style.userSelect = '';
       document.body.style.webkitUserSelect = '';
@@ -716,8 +706,12 @@ export default function PixelBunny() {
       ref={canvasRef}
       width={BUNNY_SIZE}
       height={CANVAS_H}
-      class="fixed top-0 left-0 pointer-events-none z-50"
       style={{ 
+        position: 'absolute',
+        left: 0,
+        top: 0,
+        zIndex: 9999,
+        pointerEvents: 'none',
         imageRendering: 'pixelated',
         touchAction: 'none',
         willChange: 'transform',
