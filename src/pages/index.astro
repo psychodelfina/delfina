@@ -2,15 +2,15 @@
 import Layout from '../layouts/Layout.astro';
 import { siteConfig } from '../config/site.config';
 
-// Preact components
+import Navbar from '../components/Navbar.astro';
+import Hero from '../components/Hero.astro';
+import Portfolio from '../components/Portfolio.astro';
+import Certificates from '../components/Certificates.astro';
+import FAQ from '../components/FAQ.astro';
+import Contacts from '../components/Contacts.astro';
+import Footer from '../components/Footer.astro';
+
 import ParallaxBackground from '../components/ParallaxBackground';
-import Navbar from '../components/Navbar';
-import Hero from '../components/Hero';
-import Portfolio from '../components/Portfolio';
-import Certificates from '../components/Certificates';
-import FAQ from '../components/FAQ';
-import Contacts from '../components/Contacts';
-import Footer from '../components/Footer';
 import Lightbox from '../components/Lightbox';
 import PixelBunny from '../components/PixelBunny';
 ---
@@ -18,7 +18,7 @@ import PixelBunny from '../components/PixelBunny';
 <Layout title={siteConfig.seo.title} description={siteConfig.seo.description}>
 	<PixelBunny client:load />
 	<ParallaxBackground client:load />
-	<Navbar config={siteConfig} client:load />
+	<Navbar config={siteConfig} />
 	<Hero config={siteConfig} />
 	<Portfolio images={siteConfig.portfolio} />
 	<Certificates images={siteConfig.certificates} telegramUrl={siteConfig.contacts.telegram} />
@@ -27,19 +27,3 @@ import PixelBunny from '../components/PixelBunny';
 	<Footer config={siteConfig} />
 	<Lightbox client:load />
 </Layout>
-
-<script>
-	// Smooth scroll for nav links
-	document.addEventListener('DOMContentLoaded', () => {
-		document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
-			anchor.addEventListener('click', function (e) {
-				e.preventDefault();
-				const href = (this as HTMLAnchorElement).getAttribute('href');
-				if (href) {
-					const target = document.querySelector(href);
-					target?.scrollIntoView({ behavior: 'smooth' });
-				}
-			});
-		});
-	});
-</script>

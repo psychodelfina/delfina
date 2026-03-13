@@ -144,4 +144,9 @@ const structuredData = generateStructuredData(siteConfig);
 	html {
 		scroll-behavior: smooth;
 	}
+
+	/* Hide default details marker in WebKit browsers */
+	summary::-webkit-details-marker {
+		display: none;
+	}
 </style>

@@ -1,0 +1,35 @@
+---
+import type { SiteConfig } from '../config/site.config';
+import TelegramIcon from './icons/TelegramIcon.astro';
+
+interface Props {
+  config: SiteConfig;
+}
+
+const { config } = Astro.props;
+---
+
+<nav class="fixed top-0 left-0 right-0 z-[1000] bg-bg-dark/85 backdrop-blur-xl border-b border-neon-pink/20">
+  <div class="max-w-[1200px] mx-auto px-6 py-4 flex items-center justify-between gap-6">
+    <a href="#" class="font-heading text-xl font-bold bg-gradient-neon bg-clip-text text-transparent">
+      {config.hero.name}
+    </a>
+
+    <div class="hidden md:flex gap-8">
+      <a href="#portfolio" class="text-sm font-medium text-text-muted hover:text-neon-pink transition-colors duration-300">Работы</a>
+      <a href="#certificates" class="text-sm font-medium text-text-muted hover:text-neon-pink transition-colors duration-300">Сертификаты</a>
+      <a href="#faq" class="text-sm font-medium text-text-muted hover:text-neon-pink transition-colors duration-300">FAQ</a>
+      <a href="#contacts" class="text-sm font-medium text-text-muted hover:text-neon-pink transition-colors duration-300">Контакты</a>
+    </div>
+
+    <a
+      href={config.contacts.telegram}
+      class="flex items-center gap-2 px-5 py-2.5 bg-gradient-neon rounded-full text-sm font-semibold hover:-translate-y-0.5 hover:shadow-glow-pink transition-all duration-300"
+      target="_blank"
+      rel="noopener"
+    >
+      <TelegramIcon size={20} />
+      Написать
+    </a>
+  </div>
+</nav>

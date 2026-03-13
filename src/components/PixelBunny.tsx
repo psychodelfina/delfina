@@ -438,8 +438,8 @@ export default function PixelBunny() {
      * Canvas должен покрывать всю прокручиваемую область.
      */
     const resizeCanvas = () => {
-      canvas.width = Math.max(document.documentElement.scrollWidth, window.innerWidth);
-      canvas.height = Math.max(document.documentElement.scrollHeight, window.innerHeight);
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
     };
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
@@ -632,8 +632,11 @@ export default function PixelBunny() {
       bunny.y += bunny.vy;
       
       // -----------------------------------------------------------------------
-      // ГРАНИЦЫ ЭКРАНА С ОТСКОКОМ
+      // ГРАНИЦЫ ДОКУМЕНТА С ОТСКОКОМ
       // -----------------------------------------------------------------------
+      
+      const docWidth = Math.max(document.documentElement.scrollWidth, window.innerWidth);
+      const docHeight = Math.max(document.documentElement.scrollHeight, window.innerHeight);
       
       // Левая граница
       if (bunny.x < -X_OUT_BOUNDS) {
@@ -642,8 +645,8 @@ export default function PixelBunny() {
         bunny.direction = 'right';
       }
       // Правая граница
-      if (bunny.x > canvas.width - BUNNY_SIZE + X_OUT_BOUNDS) {
-        bunny.x = canvas.width - BUNNY_SIZE + X_OUT_BOUNDS;
+      if (bunny.x > docWidth - BUNNY_SIZE + X_OUT_BOUNDS) {
+        bunny.x = docWidth - BUNNY_SIZE + X_OUT_BOUNDS;
         bunny.vx = -Math.abs(bunny.vx);
         bunny.direction = 'left';
       }
@@ -653,8 +656,8 @@ export default function PixelBunny() {
         bunny.vy = Math.abs(bunny.vy);
       }
       // Нижняя граница
-      if (bunny.y > canvas.height - BUNNY_SIZE - BOUNDARY_PADDING) {
-        bunny.y = canvas.height - BUNNY_SIZE - BOUNDARY_PADDING;
+      if (bunny.y > docHeight - BUNNY_SIZE - BOUNDARY_PADDING) {
+        bunny.y = docHeight - BUNNY_SIZE - BOUNDARY_PADDING;
         bunny.vy = -Math.abs(bunny.vy);
       }
       
@@ -662,16 +665,21 @@ export default function PixelBunny() {
       // ОТРИСОВКА
       // -----------------------------------------------------------------------
       
-      // Отрисовка спрайта зайца
+      // Отрисовка спрайта зайца (с учётом прокрутки для fixed canvas)
+      const scrollX = window.scrollX || 0;
+      const scrollY = window.scrollY || 0;
+      const drawX = bunny.x - scrollX;
+      const drawY = bunny.y - scrollY;
+      
       const { sprite, flipX } = getCurrentSprite(bunny);
-      drawSprite(ctx, sprite, bunny.x, bunny.y, flipX);
+      drawSprite(ctx, sprite, drawX, drawY, flipX);
       
       // Добавляем тень под зайцем для объёма
       ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
       ctx.beginPath();
       ctx.ellipse(
-        bunny.x + BUNNY_SIZE / 2, 
-        bunny.y + BUNNY_SIZE - 2, 
+        drawX + BUNNY_SIZE / 2, 
+        drawY + BUNNY_SIZE - 2, 
         BUNNY_SIZE / 3, 
         4, 
         0, 0, Math.PI * 2
@@ -683,8 +691,8 @@ export default function PixelBunny() {
     };
     
     // Начальная позиция - случайная в пределах экрана
-    bunnyRef.current.x = Math.random() * (canvas.width - BUNNY_SIZE - 100) + 50;
-    bunnyRef.current.y = Math.random() * (canvas.height - BUNNY_SIZE - 100) + 50;
+    bunnyRef.current.x = Math.random() * (window.innerWidth - BUNNY_SIZE - 100) + 50;
+    bunnyRef.current.y = Math.random() * (window.innerHeight - BUNNY_SIZE - 100) + 50;
     
     // Запуск игрового цикла
     gameLoop();
@@ -710,7 +718,7 @@ export default function PixelBunny() {
   return (
     <canvas
       ref={canvasRef}
-      class="absolute top-0 left-0 pointer-events-none z-50"
+      class="fixed top-0 left-0 pointer-events-none z-50"
       style={{ 
         imageRendering: 'pixelated',
         // Отключаем touch-action чтобы браузер не обрабатывал касания
