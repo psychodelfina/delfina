@@ -9,8 +9,8 @@ export default function ScrollAnimations() {
     ScrollTrigger.config({ ignoreMobileResize: true });
 
     const mm = gsap.matchMedia();
-    const ctx = gsap.context(() => {
 
+    mm.add('(min-width: 768px)', () => {
       document.querySelectorAll('[data-scroll-float]').forEach((el) => {
         const speed = parseFloat((el as HTMLElement).dataset.scrollFloat || '0.5');
         gsap.to(el, {
@@ -24,10 +24,10 @@ export default function ScrollAnimations() {
           },
         });
       });
+    });
 
-      mm.add('(prefers-reduced-motion: reduce)', () => {
-        ScrollTrigger.getAll().forEach((st) => st.kill());
-      });
+    mm.add('(prefers-reduced-motion: reduce)', () => {
+      ScrollTrigger.getAll().forEach((st) => st.kill());
     });
 
     const progressBar = document.querySelector<HTMLElement>('[data-scroll-progress]');
@@ -55,7 +55,6 @@ export default function ScrollAnimations() {
     }
 
     return () => {
-      ctx.revert();
       mm.revert();
       window.removeEventListener('scroll', onScroll);
       cancelAnimationFrame(rafId);
