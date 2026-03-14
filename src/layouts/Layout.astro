@@ -180,4 +180,62 @@ const structuredData = generateStructuredData(siteConfig);
 	summary::-webkit-details-marker {
 		display: none;
 	}
+
+	/* Landscape mobile: short viewport height */
+	@media (orientation: landscape) and (max-height: 500px) {
+		#main-nav > div {
+			padding-top: 0.25rem;
+			padding-bottom: 0.25rem;
+		}
+
+		#hero {
+			min-height: auto;
+			padding-top: 48px;
+			padding-bottom: 0.5rem;
+		}
+
+		#hero > div:not(.absolute) {
+			grid-template-columns: auto 1fr;
+			gap: 1rem;
+		}
+
+		#hero .parallax-image {
+			max-width: clamp(120px, 35vh, 200px);
+		}
+
+		#hero h1 {
+			font-size: 1.5rem;
+		}
+
+		div[data-horizontal-scroll] {
+			height: auto;
+			overflow: visible;
+			padding-top: 1rem;
+			padding-bottom: 1rem;
+		}
+
+		div[data-horizontal-scroll] > div {
+			height: auto;
+		}
+
+		div[data-horizontal-track] {
+			display: grid;
+			grid-template-columns: repeat(2, 1fr);
+			gap: 0.75rem;
+		}
+
+		div[data-horizontal-track] > figure {
+			width: auto;
+		}
+
+		#faq,
+		#contacts {
+			padding-top: 1rem;
+			padding-bottom: 1rem;
+		}
+
+		[data-scroll-subtitle] {
+			margin-bottom: 0.75rem;
+		}
+	}
 </style>

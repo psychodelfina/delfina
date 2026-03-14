@@ -10,7 +10,7 @@ export default function ScrollAnimations() {
 
     const mm = gsap.matchMedia();
 
-    mm.add('(min-width: 768px)', () => {
+    mm.add('(min-width: 768px) and (min-height: 501px)', () => {
       document.querySelectorAll('[data-scroll-float]').forEach((el) => {
         const speed = parseFloat((el as HTMLElement).dataset.scrollFloat || '0.5');
         gsap.to(el, {
