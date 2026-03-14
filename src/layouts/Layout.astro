@@ -140,13 +140,6 @@ const structuredData = generateStructuredData(siteConfig);
 					document.body.style.webkitUserSelect = '';
 
 					window.dispatchEvent(new CustomEvent('bfcache-restore'));
-
-					requestAnimationFrame(() => {
-						document.documentElement.style.transform = 'translateZ(0)';
-						requestAnimationFrame(() => {
-							document.documentElement.style.transform = '';
-						});
-					});
 				}
 			});
 		</script>

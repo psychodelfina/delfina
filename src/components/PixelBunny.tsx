@@ -336,9 +336,6 @@ export default function PixelBunny() {
   /** Кешированные размеры документа (обновляются при resize) */
   const docSizeRef = useRef({ w: 0, h: 0 });
 
-  /** Предыдущий отрисованный спрайт для условной перерисовки */
-  const prevSpriteRef = useRef<HTMLCanvasElement | null>(null);
-
   const getCurrentSprite = (bunny: BunnyPosition): { sprite: number[][], flipX: boolean } => {
     if (bunny.state === 'caught') {
       return { sprite: bunnyFrontCry, flipX: false };
@@ -521,9 +518,16 @@ export default function PixelBunny() {
       lastTimeRef.current = 0;
       updateDocSize();
       spriteCache.clear();
-      prevSpriteRef.current = null;
     };
 
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        lastTimeRef.current = 0;
+        spriteCache.clear();
+      }
+    };
+
+    document.addEventListener('visibilitychange', onVisibilityChange);
     document.addEventListener('mousemove', handleMouseMove, { passive: true });
     document.addEventListener('mousedown', handleMouseDown);
     document.addEventListener('mouseup', handleMouseUp);
@@ -537,10 +541,6 @@ export default function PixelBunny() {
     // ГЛАВНЫЙ ИГРОВОЙ ЦИКЛ
     // =========================================================================
 
-    /**
-     * Перерисовка спрайта на маленьком canvas.
-     * Вызывается только при смене кадра анимации.
-     */
     const redrawSprite = (cachedSprite: HTMLCanvasElement) => {
       ctx.clearRect(0, 0, BUNNY_SIZE, CANVAS_H);
       ctx.drawImage(cachedSprite, 0, 0);
@@ -662,17 +662,9 @@ export default function PixelBunny() {
       
       updateTransform();
 
-      // -----------------------------------------------------------------------
-      // УСЛОВНАЯ ПЕРЕРИСОВКА (только при смене кадра анимации)
-      // -----------------------------------------------------------------------
-
       const { sprite, flipX } = getCurrentSprite(bunny);
       const cachedSprite = renderSpriteToCanvas(sprite, flipX);
-
-      if (cachedSprite !== prevSpriteRef.current) {
-        prevSpriteRef.current = cachedSprite;
-        redrawSprite(cachedSprite);
-      }
+      redrawSprite(cachedSprite);
       
       animationRef.current = requestAnimationFrame(gameLoop);
     };
@@ -683,9 +675,7 @@ export default function PixelBunny() {
     updateTransform();
 
     const { sprite: initSprite, flipX: initFlip } = getCurrentSprite(bunnyRef.current);
-    const initCached = renderSpriteToCanvas(initSprite, initFlip);
-    prevSpriteRef.current = initCached;
-    redrawSprite(initCached);
+    redrawSprite(renderSpriteToCanvas(initSprite, initFlip));
 
     canvas.style.opacity = '1';
     
@@ -695,6 +685,7 @@ export default function PixelBunny() {
     return () => {
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('bfcache-restore', onBfcacheRestore);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mousedown', handleMouseDown);
       document.removeEventListener('mouseup', handleMouseUp);

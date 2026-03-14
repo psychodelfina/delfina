@@ -16,8 +16,8 @@ import ScrollAnimations from '../components/ScrollAnimations';
 ---
 
 <Layout title={siteConfig.seo.title} description={siteConfig.seo.description}>
-	<PixelBunny client:load />
-	<ParallaxBackground client:load />
+	<PixelBunny client:only="preact" />
+	<ParallaxBackground client:only="preact" />
 	<Hero config={siteConfig} />
 	<Portfolio images={siteConfig.portfolio} />
 	<Certificates images={siteConfig.certificates} telegramUrl={siteConfig.contacts.telegram} />
