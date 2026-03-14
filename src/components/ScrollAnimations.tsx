@@ -24,6 +24,29 @@ export default function ScrollAnimations() {
           },
         });
       });
+
+      document.querySelectorAll<HTMLElement>('[data-horizontal-scroll]').forEach((section) => {
+        const track = section.querySelector<HTMLElement>('[data-horizontal-track]');
+        if (!track) return;
+
+        const getScrollAmount = () => track.scrollWidth - track.clientWidth;
+
+        if (getScrollAmount() <= 0) return;
+
+        gsap.to(track, {
+          x: () => -getScrollAmount(),
+          ease: 'none',
+          scrollTrigger: {
+            trigger: section,
+            pin: true,
+            scrub: 1,
+            start: 'top top',
+            end: () => `+=${getScrollAmount()}`,
+            invalidateOnRefresh: true,
+            anticipatePin: 1,
+          },
+        });
+      });
     });
 
     mm.add('(prefers-reduced-motion: reduce)', () => {
