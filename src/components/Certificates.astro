@@ -53,8 +53,8 @@ function getImage(filename: string): ImageMetadata | undefined {
                 class="parallax-gallery w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                 data-parallax-speed="0.05"
                 itemprop="contentUrl"
-                width={750}
-                height={750}
+                widths={[400, 750]}
+                sizes="(max-width: 768px) 100vw, 750px"
               />
             </figure>
           );

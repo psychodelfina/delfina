@@ -18,7 +18,7 @@ export default defineConfig({
           {
             weight: '300 700',
             style: 'normal',
-            src: ['./src/assets/fonts/comfortaa/Comfortaa-VariableFont_wght.ttf'],
+            src: ['./src/assets/fonts/comfortaa/Comfortaa-VariableFont_wght.woff2'],
           },
         ],
       },
@@ -32,12 +32,12 @@ export default defineConfig({
           {
             weight: '200 1000',
             style: 'normal',
-            src: ['./src/assets/fonts/nutino/Nunito-VariableFont_wght.ttf'],
+            src: ['./src/assets/fonts/nutino/Nunito-VariableFont_wght.woff2'],
           },
           {
             weight: '200 1000',
             style: 'italic',
-            src: ['./src/assets/fonts/nutino/Nunito-Italic-VariableFont_wght.ttf'],
+            src: ['./src/assets/fonts/nutino/Nunito-Italic-VariableFont_wght.woff2'],
           },
         ],
       },
