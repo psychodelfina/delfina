@@ -36,51 +36,71 @@ export default function ScrollAnimations() {
     };
     window.addEventListener('bfcache-restore', onBfcacheRestore);
 
-    const isDesktop = window.matchMedia('(min-width: 768px) and (min-height: 501px)').matches;
+    const desktopMql = window.matchMedia('(min-width: 768px) and (min-height: 501px)');
+    let gsapInitStarted = false;
 
-    if (isDesktop) {
-      (async () => {
-        const [{ gsap }, { ScrollTrigger }] = await Promise.all([
-          import('gsap'),
-          import('gsap/ScrollTrigger'),
-        ]);
+    const initGsap = async () => {
+      if (gsapInitStarted || disposed) return;
+      gsapInitStarted = true;
 
-        if (disposed) return;
+      const [{ gsap }, { ScrollTrigger }] = await Promise.all([
+        import('gsap'),
+        import('gsap/ScrollTrigger'),
+      ]);
 
-        gsap.registerPlugin(ScrollTrigger);
-        ScrollTrigger.config({ ignoreMobileResize: true });
-        scrollTriggerRef = ScrollTrigger;
+      if (disposed) return;
 
-        mm = gsap.matchMedia();
+      gsap.registerPlugin(ScrollTrigger);
+      ScrollTrigger.config({ ignoreMobileResize: true });
+      scrollTriggerRef = ScrollTrigger;
 
-        mm.add('(min-width: 768px) and (min-height: 501px)', () => {
-          document.querySelectorAll<HTMLElement>('[data-horizontal-scroll]').forEach((section) => {
-            const track = section.querySelector<HTMLElement>('[data-horizontal-track]');
-            if (!track) return;
+      mm = gsap.matchMedia();
 
-            const getScrollAmount = () => track.scrollWidth - track.clientWidth;
-            if (getScrollAmount() <= 0) return;
+      mm.add('(min-width: 768px) and (min-height: 501px)', () => {
+        document.querySelectorAll<HTMLElement>('[data-horizontal-scroll]').forEach((section) => {
+          const track = section.querySelector<HTMLElement>('[data-horizontal-track]');
+          if (!track) return;
 
-            gsap.to(track, {
-              x: () => -getScrollAmount(),
-              ease: 'none',
-              scrollTrigger: {
-                trigger: section,
-                pin: true,
-                scrub: 1,
-                start: 'top top',
-                end: () => `+=${getScrollAmount()}`,
-                invalidateOnRefresh: true,
-                anticipatePin: 1,
-              },
-            });
+          const getScrollAmount = () => track.scrollWidth - track.clientWidth;
+          if (getScrollAmount() <= 0) return;
+
+          gsap.to(track, {
+            x: () => -getScrollAmount(),
+            ease: 'none',
+            scrollTrigger: {
+              trigger: section,
+              pin: true,
+              scrub: 1,
+              start: 'top top',
+              end: () => `+=${getScrollAmount()}`,
+              invalidateOnRefresh: true,
+              anticipatePin: 1,
+            },
           });
         });
+      });
 
-        mm.add('(prefers-reduced-motion: reduce)', () => {
-          ScrollTrigger.getAll().forEach((st) => st.kill());
-        });
-      })();
+      mm.add('(prefers-reduced-motion: reduce)', () => {
+        ScrollTrigger.getAll().forEach((st) => st.kill());
+      });
+    };
+
+    // Грузим GSAP при первом совпадении desktop-медиазапроса, а не один раз на
+    // загрузке. Если окно стартовало узким (или планшет был в portrait) и его
+    // растянули до desktop, горизонтальный скролл появится без перезагрузки
+    // (LIMIT-01). После инициализации gsap.matchMedia сам реагирует на смену
+    // медиа, поэтому слушатель снимает себя.
+    const onDesktopChange = (e: MediaQueryListEvent) => {
+      if (e.matches) {
+        desktopMql.removeEventListener('change', onDesktopChange);
+        initGsap();
+      }
+    };
+
+    if (desktopMql.matches) {
+      initGsap();
+    } else {
+      desktopMql.addEventListener('change', onDesktopChange);
     }
 
     return () => {
@@ -88,6 +108,7 @@ export default function ScrollAnimations() {
       mm?.revert();
       window.removeEventListener('scroll', onScroll);
       window.removeEventListener('bfcache-restore', onBfcacheRestore);
+      desktopMql.removeEventListener('change', onDesktopChange);
       cancelAnimationFrame(rafId);
       resizeObserver?.disconnect();
     };
