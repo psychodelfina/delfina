@@ -63,7 +63,7 @@ const socials = [
   style="background: linear-gradient(180deg, transparent 0%, rgba(153, 69, 255, 0.05) 50%, transparent 100%)"
 >
   <div class="max-w-[1200px] mx-auto px-6">
-    <h2 id="contacts-heading" class="font-heading text-3xl md:text-4xl text-center mb-4 flex items-center justify-center gap-4" data-scroll-heading>
+    <h2 id="contacts-heading" class="font-heading text-3xl md:text-4xl text-center mb-4 flex items-center justify-center gap-4">
       <span class="text-3xl" aria-hidden="true">📱</span>
       Контакты
     </h2>
@@ -71,7 +71,7 @@ const socials = [
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-16 items-start max-w-[500px] md:max-w-none mx-auto">
       {socials.map((s) => (
-        <div class={`bg-bg-card rounded-3xl p-6 border border-white/10 hover:-translate-y-1 ${s.shadow} transition-all duration-300`} data-scroll-contact>
+        <div class={`bg-bg-card rounded-3xl p-6 border border-white/10 hover:-translate-y-1 ${s.shadow} transition-all duration-300`}>
           <div class="flex items-center gap-3 mb-5 font-semibold text-lg">
             {s.icon === 'instagram' && <InstagramIcon size={32} />}
             {s.icon === 'vk' && <VKIcon size={32} />}
@@ -91,7 +91,7 @@ const socials = [
 
     <!-- Main CTA -->
     <div class="flex justify-center">
-      <div class="text-center p-10 md:p-16 bg-gradient-to-br from-neon-pink/10 to-neon-purple/10 rounded-[32px] border border-neon-pink/30 max-w-[600px]" data-scroll-cta>
+      <div class="text-center p-10 md:p-16 bg-gradient-to-br from-neon-pink/10 to-neon-purple/10 rounded-[32px] border border-neon-pink/30 max-w-[600px]">
         <h3 class="font-heading text-2xl md:text-3xl mb-4 bg-gradient-neon bg-clip-text text-transparent">
           Готовы к яркой татуировке?
         </h3>

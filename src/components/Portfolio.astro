@@ -19,7 +19,7 @@ function getImage(filename: string): ImageMetadata | undefined {
 <section class="relative z-[1]" id="portfolio" aria-labelledby="portfolio-heading">
   <div class="py-24 md:py-0 md:h-screen md:overflow-hidden" data-horizontal-scroll>
     <div class="max-w-[1200px] md:max-w-none mx-auto px-6 md:px-12 md:h-full md:flex md:flex-col md:justify-center">
-      <h2 id="portfolio-heading" class="font-heading text-3xl md:text-4xl text-center mb-4 flex items-center justify-center gap-4" data-scroll-heading>
+      <h2 id="portfolio-heading" class="font-heading text-3xl md:text-4xl text-center mb-4 flex items-center justify-center gap-4">
         <span class="text-3xl" aria-hidden="true">🎨</span>
         Мои работы
       </h2>
@@ -37,7 +37,6 @@ function getImage(filename: string): ImageMetadata | undefined {
           return imgData && (
             <figure
               class="portfolio-item relative rounded-2xl overflow-hidden aspect-square cursor-pointer group m-0 md:w-[750px] md:flex-shrink-0"
-              data-scroll-portfolio
               role="listitem"
               itemscope
               itemtype="https://schema.org/ImageObject"
@@ -47,8 +46,7 @@ function getImage(filename: string): ImageMetadata | undefined {
                 alt={image.alt}
                 loading="lazy"
                 decoding="async"
-                class="parallax-gallery w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                data-parallax-speed="0.05"
+                class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                 itemprop="contentUrl"
                 widths={[400, 750]}
                 sizes="(max-width: 768px) 100vw, 750px"
