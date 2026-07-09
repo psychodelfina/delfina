@@ -337,6 +337,14 @@ export default function PixelBunny() {
   const isDraggingRef = useRef(false);
   const lastTimeRef = useRef<number>(0);
 
+  /**
+   * Управление не-passive touchmove-локом скролла. Постоянный touchmove на
+   * document остаётся passive (мгновенный старт скролла), а блокировка прокрутки
+   * навешивается только на время удержания зайца (PERF-02). Реализация задаётся
+   * внутри useEffect, где живёт стабильная ссылка на обработчик.
+   */
+  const setTouchScrollLockRef = useRef<(locked: boolean) => void>(() => {});
+
   /** Кешированные размеры документа (обновляются при resize) */
   const docSizeRef = useRef({ w: 0, h: 0 });
 
@@ -390,7 +398,10 @@ export default function PixelBunny() {
         bunny.vx = 0;
         bunny.vy = 0;
         isDraggingRef.current = true;
-        
+
+        // Пока заяц удерживается — блокируем прокрутку страницы (не-passive touchmove)
+        setTouchScrollLockRef.current(true);
+
         // Предотвращаем выделение текста пока заяц удерживается
         document.body.style.userSelect = 'none';
         document.body.style.webkitUserSelect = 'none';
@@ -421,7 +432,10 @@ export default function PixelBunny() {
     }
     
     isDraggingRef.current = false;
-    
+
+    // Снимаем блокировку прокрутки — touchmove снова только passive
+    setTouchScrollLockRef.current(false);
+
     // Восстанавливаем возможность выделения текста
     document.body.style.userSelect = '';
     document.body.style.webkitUserSelect = '';
@@ -468,6 +482,12 @@ export default function PixelBunny() {
 
     window.addEventListener('resize', handleResize);
 
+    // Высота документа меняется без resize: раскрытие FAQ (<details>) и pin-spacer'ы
+    // GSAP после инициализации ScrollTrigger. ResizeObserver на body держит границы
+    // зайца актуальными — иначе он не доходит до низа или убегает за футер (BUG-01).
+    const docResizeObserver = new ResizeObserver(updateDocSize);
+    docResizeObserver.observe(document.body);
+
     const getPageCoords = (clientX: number, clientY: number) => ({
       x: clientX + (window.scrollX || window.pageXOffset || document.documentElement.scrollLeft || 0),
       y: clientY + (window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0)
@@ -508,12 +528,24 @@ export default function PixelBunny() {
       }
     };
 
+    // Постоянный touchmove только отслеживает палец и остаётся passive — браузер
+    // не ждёт JS перед стартом скролла (PERF-02).
     const handleTouchMove = (e: TouchEvent) => {
       if (e.touches.length > 0) {
         const touch = e.touches[0];
         const coords = getPageCoords(touch.clientX, touch.clientY);
         handlePointerMove(coords.x, coords.y);
-        if (isDraggingRef.current) e.preventDefault();
+      }
+    };
+
+    // Не-passive touchmove навешивается только на время удержания зайца, чтобы
+    // гасить прокрутку страницы во время перетаскивания.
+    const preventTouchScroll = (e: TouchEvent) => e.preventDefault();
+    setTouchScrollLockRef.current = (locked: boolean) => {
+      if (locked) {
+        document.addEventListener('touchmove', preventTouchScroll, { passive: false });
+      } else {
+        document.removeEventListener('touchmove', preventTouchScroll);
       }
     };
 
@@ -538,7 +570,7 @@ export default function PixelBunny() {
     document.addEventListener('mousedown', handleMouseDown);
     document.addEventListener('mouseup', handleMouseUp);
     document.addEventListener('touchstart', handleTouchStart, { passive: false });
-    document.addEventListener('touchmove', handleTouchMove, { passive: false });
+    document.addEventListener('touchmove', handleTouchMove, { passive: true });
     document.addEventListener('touchend', handleTouchEnd);
     document.addEventListener('touchcancel', handleTouchEnd);
     window.addEventListener('bfcache-restore', onBfcacheRestore);
@@ -702,6 +734,7 @@ export default function PixelBunny() {
 
     return () => {
       window.removeEventListener('resize', handleResize);
+      docResizeObserver.disconnect();
       window.removeEventListener('bfcache-restore', onBfcacheRestore);
       document.removeEventListener('visibilitychange', onVisibilityChange);
       document.removeEventListener('mousemove', handleMouseMove);
@@ -709,6 +742,7 @@ export default function PixelBunny() {
       document.removeEventListener('mouseup', handleMouseUp);
       document.removeEventListener('touchstart', handleTouchStart);
       document.removeEventListener('touchmove', handleTouchMove);
+      document.removeEventListener('touchmove', preventTouchScroll);
       document.removeEventListener('touchend', handleTouchEnd);
       document.removeEventListener('touchcancel', handleTouchEnd);
       cancelAnimationFrame(animationRef.current);
