@@ -16,7 +16,9 @@ export default function Lightbox() {
       const img = parent.querySelector('img') as HTMLImageElement | null;
       if (!img) return;
 
-      setImageSrc(img.src);
+      // currentSrc — реально загруженный вариант из srcset; src отдал бы
+      // fallback другой ширины и вызвал бы лишний сетевой запрос (BUG-04).
+      setImageSrc(img.currentSrc || img.src);
       setImageAlt(img.alt);
       setIsOpen(true);
       document.body.style.overflow = 'hidden';
