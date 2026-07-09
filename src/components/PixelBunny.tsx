@@ -279,7 +279,7 @@ function renderSpriteToCanvas(sprite: number[][], flipX: boolean): HTMLCanvasEle
 
   const offscreen = document.createElement('canvas');
   offscreen.width = BUNNY_SIZE;
-  offscreen.height = BUNNY_SIZE;
+  offscreen.height = CANVAS_H;
   const octx = offscreen.getContext('2d')!;
 
   for (let row = 0; row < sprite.length; row++) {
@@ -294,6 +294,13 @@ function renderSpriteToCanvas(sprite: number[][], flipX: boolean): HTMLCanvasEle
       }
     }
   }
+
+  // Тень запекаем прямо в кэшированный спрайт — тогда отрисовка кадра сводится
+  // к clearRect + drawImage и не строит эллипс каждый кадр (PERF-01).
+  octx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+  octx.beginPath();
+  octx.ellipse(BUNNY_SIZE / 2, BUNNY_SIZE - 2, BUNNY_SIZE / 3, 4, 0, 0, Math.PI * 2);
+  octx.fill();
 
   spriteCache.set(key, offscreen);
   return offscreen;
@@ -448,9 +455,13 @@ export default function PixelBunny() {
     };
     updateDocSize();
 
-    const updateTransform = () => {
-      const bunny = bunnyRef.current;
-      canvas.style.transform = `translate3d(${Math.round(bunny.x)}px,${Math.round(bunny.y)}px,0)`;
+    // Dirty-check отрисовки: последняя нарисованная позиция и кэш спрайта.
+    let lastRoundedX = NaN;
+    let lastRoundedY = NaN;
+    let lastSprite: HTMLCanvasElement | null = null;
+
+    const updateTransform = (roundedX: number, roundedY: number) => {
+      canvas.style.transform = `translate3d(${roundedX}px,${roundedY}px,0)`;
     };
 
     const handleResize = () => updateDocSize();
@@ -539,10 +550,6 @@ export default function PixelBunny() {
     const redrawSprite = (cachedSprite: HTMLCanvasElement) => {
       ctx.clearRect(0, 0, BUNNY_SIZE, CANVAS_H);
       ctx.drawImage(cachedSprite, 0, 0);
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
-      ctx.beginPath();
-      ctx.ellipse(BUNNY_SIZE / 2, BUNNY_SIZE - 2, BUNNY_SIZE / 3, 4, 0, 0, Math.PI * 2);
-      ctx.fill();
     };
     
     const gameLoop = (timestamp: number) => {
@@ -656,22 +663,37 @@ export default function PixelBunny() {
         bunny.vy = -Math.abs(bunny.vy);
       }
       
-      updateTransform();
+      // Позиция: пишем transform только при изменении округлённых координат.
+      const roundedX = Math.round(bunny.x);
+      const roundedY = Math.round(bunny.y);
+      if (roundedX !== lastRoundedX || roundedY !== lastRoundedY) {
+        lastRoundedX = roundedX;
+        lastRoundedY = roundedY;
+        updateTransform(roundedX, roundedY);
+      }
 
+      // Спрайт: перерисовываем только при смене кадра (спрайт + flip + кадр анимации).
+      // Разные кадры/направления — разные кэш-канвасы, поэтому сравнения ссылок достаточно.
       const { sprite, flipX } = getCurrentSprite(bunny);
       const cachedSprite = renderSpriteToCanvas(sprite, flipX);
-      redrawSprite(cachedSprite);
-      
+      if (cachedSprite !== lastSprite) {
+        lastSprite = cachedSprite;
+        redrawSprite(cachedSprite);
+      }
+
       animationRef.current = requestAnimationFrame(gameLoop);
     };
     
     bunnyRef.current.x = Math.random() * (window.innerWidth - BUNNY_SIZE - 100) + 50;
     bunnyRef.current.y = Math.random() * (window.innerHeight - BUNNY_SIZE - 100) + 50;
 
-    updateTransform();
+    lastRoundedX = Math.round(bunnyRef.current.x);
+    lastRoundedY = Math.round(bunnyRef.current.y);
+    updateTransform(lastRoundedX, lastRoundedY);
 
     const { sprite: initSprite, flipX: initFlip } = getCurrentSprite(bunnyRef.current);
-    redrawSprite(renderSpriteToCanvas(initSprite, initFlip));
+    lastSprite = renderSpriteToCanvas(initSprite, initFlip);
+    redrawSprite(lastSprite);
 
     canvas.style.opacity = '1';
     

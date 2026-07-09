@@ -73,11 +73,19 @@ export default function ParallaxBackground() {
 
     let dpr = 1;
 
+    // Порог сходимости сглаженной позиции мыши (в нормализованных единицах ~[-1,1]).
+    // При максимальном parallaxScale это <0.1px смещения — визуально неотличимо.
+    const MOUSE_EPS = 0.0005;
+    // Требуется однократная отрисовка: старт и после resize. В reduced-motion
+    // именно этот флаг обеспечивает единственную перерисовку статичной сцены.
+    let forceRedraw = true;
+
     const resize = () => {
       dpr = window.devicePixelRatio || 1;
       canvas.width = window.innerWidth * dpr;
       canvas.height = window.innerHeight * dpr;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      forceRedraw = true;
     };
     resize();
     window.addEventListener('resize', resize);
@@ -136,26 +144,42 @@ export default function ParallaxBackground() {
       if (targetInterval > 0 && time - lastFrameTime < targetInterval) return;
       lastFrameTime = time;
 
+      const mouse = mouseRef.current;
+      const mdx = mouse.targetX - mouse.x;
+      const mdy = mouse.targetY - mouse.y;
+      // Сглаженная позиция считается «движущейся», пока не сошлась к цели.
+      const mouseMoving = Math.abs(mdx) > MOUSE_EPS || Math.abs(mdy) > MOUSE_EPS;
+      if (mouseMoving) {
+        mouse.x += mdx * 0.08;
+        mouse.y += mdy * 0.08;
+      }
+
       const w = window.innerWidth;
       const h = window.innerHeight;
-      ctx.clearRect(0, 0, w, h);
+      const parallaxScale = w * 0.15;
 
-      const mouse = mouseRef.current;
-      mouse.x += (mouse.targetX - mouse.x) * 0.08;
-      mouse.y += (mouse.targetY - mouse.y) * 0.08;
+      // Небулы: transform пишем только пока сглаженная мышь реально движется (PERF-05).
+      if (!isMobile && nebulaRef.current && (mouseMoving || forceRedraw)) {
+        const nx = mouse.x * 0.2 * parallaxScale * 0.3;
+        const ny = mouse.y * 0.2 * parallaxScale * 0.3;
+        nebulaRef.current.style.transform = `translate(${nx}px, ${ny}px)`;
+      }
+
+      // Полная перерисовка canvas нужна, только когда что-то меняется:
+      //  - обычный режим — мерцание звёзд анимируется каждый кадр;
+      //  - параллакс — пока движется сглаженная позиция мыши;
+      //  - forceRedraw — первый кадр и после resize.
+      // При prefers-reduced-motion в покое сцена статична → перерисовку пропускаем (PERF-03).
+      if (reducedMotion && !mouseMoving && !forceRedraw) return;
+      forceRedraw = false;
+
+      ctx.clearRect(0, 0, w, h);
 
       const timeSec = time / 1000;
       const fieldW = w * 1.4;
       const fieldH = h * 1.4;
       const offX = (fieldW - w) * 0.5;
       const offY = (fieldH - h) * 0.5;
-      const parallaxScale = w * 0.15;
-
-      if (!isMobile && nebulaRef.current) {
-        const nx = mouse.x * 0.2 * parallaxScale * 0.3;
-        const ny = mouse.y * 0.2 * parallaxScale * 0.3;
-        nebulaRef.current.style.transform = `translate(${nx}px, ${ny}px)`;
-      }
 
       for (const star of stars) {
         const twinkle = reducedMotion
@@ -186,6 +210,7 @@ export default function ParallaxBackground() {
         cancelAnimationFrame(rafRef.current);
       } else {
         lastFrameTime = 0;
+        forceRedraw = true;
         rafRef.current = requestAnimationFrame(animate);
       }
     };
