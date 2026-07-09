@@ -53,7 +53,6 @@ export default function ParallaxBackground() {
   const nebulaRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef(0);
   const mouseRef = useRef({ x: 0, y: 0, targetX: 0, targetY: 0 });
-  const dataRef = useRef<{ stars: CanvasStar[]; particles: CanvasParticle[] } | null>(null);
 
   const [isMobile] = useState(() =>
     typeof window !== 'undefined' && window.innerWidth < 768
@@ -71,7 +70,6 @@ export default function ParallaxBackground() {
       ...createStars(isMobile ? 5 : 15, 7, 0.7, 0.8),
     ];
     const particles = createParticles(isMobile ? 2 : 10);
-    dataRef.current = { stars, particles };
 
     let dpr = 1;
 
@@ -84,13 +82,14 @@ export default function ParallaxBackground() {
     resize();
     window.addEventListener('resize', resize);
 
+    let removeMouseMove: (() => void) | undefined;
     if (!isMobile) {
       const onMouseMove = (e: MouseEvent) => {
         mouseRef.current.targetX = (e.clientX / window.innerWidth - 0.5) * 2;
         mouseRef.current.targetY = (e.clientY / window.innerHeight - 0.5) * 2;
       };
       window.addEventListener('mousemove', onMouseMove, { passive: true });
-      var removeMouseMove = () => window.removeEventListener('mousemove', onMouseMove);
+      removeMouseMove = () => window.removeEventListener('mousemove', onMouseMove);
     }
 
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;

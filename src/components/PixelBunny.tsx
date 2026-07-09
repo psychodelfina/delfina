@@ -514,13 +514,11 @@ export default function PixelBunny() {
     const onBfcacheRestore = () => {
       lastTimeRef.current = 0;
       updateDocSize();
-      spriteCache.clear();
     };
 
     const onVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
         lastTimeRef.current = 0;
-        spriteCache.clear();
       }
     };
 
