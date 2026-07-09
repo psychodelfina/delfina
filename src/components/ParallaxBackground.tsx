@@ -226,25 +226,15 @@ export default function ParallaxBackground() {
     };
   }, [isMobile]);
 
-  const nb = isMobile
-    ? { big: 300, med: 250, sm: 200, bBlur: 40, mBlur: 40, sBlur: 30 }
-    : { big: 600, med: 500, sm: 400, bBlur: 150, mBlur: 150, sBlur: 120 };
-
+  // Размеры и blur небул заданы CSS-брейкпоинтами (mobile <768px / md ≥768px),
+  // а не JS-условием isMobile, чтобы SSR-разметка совпадала на любом экране и
+  // острова можно было гидрировать на client:idle без hydration-mismatch (PERF-04).
   return (
     <div class="fixed inset-0 z-0 overflow-hidden pointer-events-none">
       <div ref={nebulaRef} class="absolute inset-0" style={{ willChange: 'transform' }}>
-        <div
-          class="absolute top-1/4 left-1/4 rounded-full bg-neon-pink/10"
-          style={{ width: `${nb.big}px`, height: `${nb.big}px`, filter: `blur(${nb.bBlur}px)` }}
-        />
-        <div
-          class="absolute bottom-1/4 right-1/4 rounded-full bg-neon-purple/10"
-          style={{ width: `${nb.med}px`, height: `${nb.med}px`, filter: `blur(${nb.mBlur}px)` }}
-        />
-        <div
-          class="absolute top-1/2 left-1/2 rounded-full bg-neon-cyan/5"
-          style={{ width: `${nb.sm}px`, height: `${nb.sm}px`, filter: `blur(${nb.sBlur}px)` }}
-        />
+        <div class="absolute top-1/4 left-1/4 rounded-full bg-neon-pink/10 w-[300px] h-[300px] blur-[40px] md:w-[600px] md:h-[600px] md:blur-[150px]" />
+        <div class="absolute bottom-1/4 right-1/4 rounded-full bg-neon-purple/10 w-[250px] h-[250px] blur-[40px] md:w-[500px] md:h-[500px] md:blur-[150px]" />
+        <div class="absolute top-1/2 left-1/2 rounded-full bg-neon-cyan/5 w-[200px] h-[200px] blur-[30px] md:w-[400px] md:h-[400px] md:blur-[120px]" />
       </div>
       <canvas ref={canvasRef} class="absolute inset-0" />
     </div>
