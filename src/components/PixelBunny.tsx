@@ -496,7 +496,23 @@ export default function PixelBunny() {
     // =========================================================================
     // ОБРАБОТЧИКИ МЫШИ
     // =========================================================================
-    
+
+    // Canvas зайца — pointer-events:none, поэтому mousedown ловит зайца, а
+    // синтетический click проходит дальше на карточку под ним и открывает
+    // лайтбокс. Помечаем нажатие по зайцу и гасим ровно следующий click в фазе
+    // capture, до того как обработчик Lightbox (bubble на document) его увидит
+    // (BUG-03). Флаг сбрасывается на каждом mousedown, поэтому «зависнуть» и
+    // проглотить посторонний клик он не может.
+    let suppressClick = false;
+
+    const suppressClickOnBunny = (e: MouseEvent) => {
+      if (suppressClick) {
+        suppressClick = false;
+        e.stopPropagation();
+        e.preventDefault();
+      }
+    };
+
     const handleMouseMove = (e: MouseEvent) => {
       const coords = getPageCoords(e.clientX, e.clientY);
       handlePointerMove(coords.x, coords.y);
@@ -504,7 +520,9 @@ export default function PixelBunny() {
 
     const handleMouseDown = (e: MouseEvent) => {
       const coords = getPageCoords(e.clientX, e.clientY);
-      if (isClickOnBunny(coords.x, coords.y)) {
+      const onBunny = isClickOnBunny(coords.x, coords.y);
+      suppressClick = onBunny;
+      if (onBunny) {
         e.preventDefault();
         handlePointerDown(coords.x, coords.y);
       }
@@ -569,6 +587,7 @@ export default function PixelBunny() {
     document.addEventListener('mousemove', handleMouseMove, { passive: true });
     document.addEventListener('mousedown', handleMouseDown);
     document.addEventListener('mouseup', handleMouseUp);
+    document.addEventListener('click', suppressClickOnBunny, { capture: true });
     document.addEventListener('touchstart', handleTouchStart, { passive: false });
     document.addEventListener('touchmove', handleTouchMove, { passive: true });
     document.addEventListener('touchend', handleTouchEnd);
@@ -740,6 +759,7 @@ export default function PixelBunny() {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mousedown', handleMouseDown);
       document.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener('click', suppressClickOnBunny, { capture: true });
       document.removeEventListener('touchstart', handleTouchStart);
       document.removeEventListener('touchmove', handleTouchMove);
       document.removeEventListener('touchmove', preventTouchScroll);
@@ -762,7 +782,7 @@ export default function PixelBunny() {
         position: 'absolute',
         left: 0,
         top: 0,
-        zIndex: 9999,
+        zIndex: 1500,
         pointerEvents: 'none',
         imageRendering: 'pixelated',
         touchAction: 'none',
