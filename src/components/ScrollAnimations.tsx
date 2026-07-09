@@ -54,20 +54,6 @@ export default function ScrollAnimations() {
         mm = gsap.matchMedia();
 
         mm.add('(min-width: 768px) and (min-height: 501px)', () => {
-          document.querySelectorAll('[data-scroll-float]').forEach((el) => {
-            const speed = parseFloat((el as HTMLElement).dataset.scrollFloat || '0.5');
-            gsap.to(el, {
-              yPercent: speed * 100,
-              ease: 'none',
-              scrollTrigger: {
-                trigger: el,
-                start: 'top bottom',
-                end: 'bottom top',
-                scrub: true,
-              },
-            });
-          });
-
           document.querySelectorAll<HTMLElement>('[data-horizontal-scroll]').forEach((section) => {
             const track = section.querySelector<HTMLElement>('[data-horizontal-track]');
             if (!track) return;
