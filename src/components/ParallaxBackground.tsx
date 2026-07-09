@@ -74,10 +74,12 @@ export default function ParallaxBackground() {
     let dpr = 1;
 
     // Порог сходимости сглаженной позиции мыши (в нормализованных единицах ~[-1,1]).
-    // При максимальном parallaxScale это <0.1px смещения — визуально неотличимо.
+    // Остаточная ошибка — доли пикселя даже на широких экранах (~0.15px при
+    // w=2560, depth=0.8) — визуально неотличимо.
     const MOUSE_EPS = 0.0005;
-    // Требуется однократная отрисовка: старт и после resize. В reduced-motion
-    // именно этот флаг обеспечивает единственную перерисовку статичной сцены.
+    // Требуется однократная отрисовка: старт, resize и возврат вкладки
+    // (visibilitychange). В reduced-motion именно этот флаг обеспечивает
+    // единственную перерисовку статичной сцены.
     let forceRedraw = true;
 
     const resize = () => {
@@ -158,7 +160,8 @@ export default function ParallaxBackground() {
       const h = window.innerHeight;
       const parallaxScale = w * 0.15;
 
-      // Небулы: transform пишем только пока сглаженная мышь реально движется (PERF-05).
+      // Небулы: transform пишем, только пока сглаженная мышь реально движется
+      // или взведён forceRedraw (PERF-05).
       if (!isMobile && nebulaRef.current && (mouseMoving || forceRedraw)) {
         const nx = mouse.x * 0.2 * parallaxScale * 0.3;
         const ny = mouse.y * 0.2 * parallaxScale * 0.3;
@@ -168,7 +171,7 @@ export default function ParallaxBackground() {
       // Полная перерисовка canvas нужна, только когда что-то меняется:
       //  - обычный режим — мерцание звёзд анимируется каждый кадр;
       //  - параллакс — пока движется сглаженная позиция мыши;
-      //  - forceRedraw — первый кадр и после resize.
+      //  - forceRedraw — первый кадр, resize и возврат вкладки.
       // При prefers-reduced-motion в покое сцена статична → перерисовку пропускаем (PERF-03).
       if (reducedMotion && !mouseMoving && !forceRedraw) return;
       forceRedraw = false;
