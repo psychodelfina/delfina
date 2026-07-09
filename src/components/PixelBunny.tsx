@@ -501,9 +501,16 @@ export default function PixelBunny() {
     // синтетический click проходит дальше на карточку под ним и открывает
     // лайтбокс. Помечаем нажатие по зайцу и гасим ровно следующий click в фазе
     // capture, до того как обработчик Lightbox (bubble на document) его увидит
-    // (BUG-03). Флаг сбрасывается на каждом mousedown, поэтому «зависнуть» и
-    // проглотить посторонний клик он не может.
+    // (BUG-03). Флаг перевыставляется на каждом mousedown и подстраховочно
+    // сбрасывается по таймеру после mouseup: если mouseup случился над другим
+    // элементом, браузер не генерирует click, и без сброса флаг проглотил бы
+    // следующий клик из любого источника (клавиатурный Enter, .click()).
     let suppressClick = false;
+
+    // Открытый лайтбокс (z-2000) перекрывает зайца (z-1500): заяц невидим и не
+    // должен перехватывать указатель — иначе клик по фону лайтбокса,
+    // геометрически попавший в скрытого зайца, гасится и лайтбокс не закрывается.
+    const isLightboxOpen = () => document.querySelector('.lightbox') !== null;
 
     const suppressClickOnBunny = (e: MouseEvent) => {
       if (suppressClick) {
@@ -519,6 +526,10 @@ export default function PixelBunny() {
     };
 
     const handleMouseDown = (e: MouseEvent) => {
+      if (isLightboxOpen()) {
+        suppressClick = false;
+        return;
+      }
       const coords = getPageCoords(e.clientX, e.clientY);
       const onBunny = isClickOnBunny(coords.x, coords.y);
       suppressClick = onBunny;
@@ -528,7 +539,16 @@ export default function PixelBunny() {
       }
     };
 
-    const handleMouseUp = () => handlePointerUp();
+    const handleMouseUp = () => {
+      handlePointerUp();
+      // click (если будет) приходит до макротаска — таймер чистит флаг только
+      // у взаимодействий, закончившихся без click.
+      if (suppressClick) {
+        setTimeout(() => {
+          suppressClick = false;
+        }, 0);
+      }
+    };
 
     // =========================================================================
     // ОБРАБОТЧИКИ КАСАНИЙ (TOUCH)
@@ -539,7 +559,7 @@ export default function PixelBunny() {
         const touch = e.touches[0];
         const coords = getPageCoords(touch.clientX, touch.clientY);
         handlePointerMove(coords.x, coords.y);
-        if (isClickOnBunny(coords.x, coords.y)) {
+        if (!isLightboxOpen() && isClickOnBunny(coords.x, coords.y)) {
           e.preventDefault();
           handlePointerDown(coords.x, coords.y);
         }
@@ -572,14 +592,20 @@ export default function PixelBunny() {
       pointerRef.current = { x: -1000, y: -1000 };
     };
 
+    // lastSprite = null форсирует перерисовку на ближайшем кадре: браузер (особенно
+    // мобильный Safari) может выгрузить битмап канваса у страницы в фоне, а
+    // dirty-check без сброса не восстановил бы картинку до смены кадра спрайта.
+    // Симметрично forceRedraw в ParallaxBackground.
     const onBfcacheRestore = () => {
       lastTimeRef.current = 0;
       updateDocSize();
+      lastSprite = null;
     };
 
     const onVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
         lastTimeRef.current = 0;
+        lastSprite = null;
       }
     };
 
